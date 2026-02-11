@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandbox Terminal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            height: 100%;
+            background-color: #1e1e1e;
+            overflow: hidden;
+        }
+        #terminal-container {
+            width: 100%;
+            height: 100%;
+            padding: 4px;
+        }
+        #terminal {
+            width: 100%;
+            height: 100%;
+        }
+        .xterm {
+            height: 100%;
+        }
+        .xterm-viewport {
+            overflow-y: auto !important;
+        }
+        #status {
+            position: fixed;
+            top: 8px;
+            right: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+            z-index: 1000;
+        }
+        #status.connected {
+            background-color: #2e7d32;
+            color: white;
+        }
+        #status.disconnected {
+            background-color: #c62828;
+            color: white;
+        }
+        #status.connecting {
+            background-color: #f57c00;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="status" class="connecting">Connecting...</div>
+    <div id="terminal-container">
+        <div id="terminal"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.min.js"></script>
+    <script>
+        const statusEl = document.getElementById('status');
+        
+        const term = new Terminal({
+            cursorBlink: true,
+            cursorStyle: 'block',
+            fontSize: 14,
+            fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+            theme: {
+                background: '#1e1e1e',
+                foreground: '#d4d4d4',
+                cursor: '#d4d4d4',
+                cursorAccent: '#1e1e1e',
+                selection: 'rgba(255, 255, 255, 0.3)',
+                black: '#000000',
+                red: '#cd3131',
+                green: '#0dbc79',
+                yellow: '#e5e510',
+                blue: '#2472c8',
+                magenta: '#bc3fbc',
+                cyan: '#11a8cd',
+                white: '#e5e5e5',
+                brightBlack: '#666666',
+                brightRed: '#f14c4c',
+                brightGreen: '#23d18b',
+                brightYellow: '#f5f543',
+                brightBlue: '#3b8eea',
+                brightMagenta: '#d670d6',
+                brightCyan: '#29b8db',
+                brightWhite: '#e5e5e5'
+            },
+            scrollback: 10000,
+            convertEol: true
+        });
+
+        const fitAddon = new FitAddon.FitAddon();
+        const webLinksAddon = new WebLinksAddon.WebLinksAddon();
+        
+        term.loadAddon(fitAddon);
+        term.loadAddon(webLinksAddon);
+        term.open(document.getElementById('terminal'));
+        fitAddon.fit();
+
+        let ws = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 10;
+        let isReconnecting = false;
+        let lastPongTime = 0;
+        let pingIntervalId = null;
+        let healthCheckIntervalId = null;
+
+        function getWebSocketUrl() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host;
+            return `${protocol}//${host}/terminal/ws`;
+        }
+
+        function connect() {
+            if (isReconnecting) return;
+            
+            const wsUrl = getWebSocketUrl();
+            console.log('Connecting to:', wsUrl);
+            
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function() {
+                console.log('WebSocket connected');
+                statusEl.textContent = 'Connected';
+                statusEl.className = 'connected';
+                reconnectAttempts = 0;
+                isReconnecting = false;
+                lastPongTime = Date.now();
+                
+                const size = { rows: term.rows, cols: term.cols };
+                ws.send(JSON.stringify({ type: 'resize', data: size }));
+                
+                startHeartbeat();
+            };
+
+            ws.onmessage = function(event) {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === 'output') {
+                        term.write(msg.data);
+                    } else if (msg.type === 'error') {
+                        term.write('\r\n\x1b[31mError: ' + msg.data + '\x1b[0m\r\n');
+                    } else if (msg.type === 'pong') {
+                        lastPongTime = Date.now();
+                    }
+                } catch (e) {
+                    console.error('Failed to parse message:', e);
+                }
+            };
+
+            ws.onclose = function(event) {
+                console.log('WebSocket closed:', event.code, event.reason);
+                statusEl.textContent = 'Disconnected';
+                statusEl.className = 'disconnected';
+                isReconnecting = false;
+                
+                stopHeartbeat();
+                scheduleReconnect();
+            };
+
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                isReconnecting = false;
+            };
+        }
+
+        function scheduleReconnect() {
+            if (isReconnecting) return;
+            
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                isReconnecting = true;
+                statusEl.textContent = `Reconnecting (${reconnectAttempts}/${maxReconnectAttempts})...`;
+                statusEl.className = 'connecting';
+                setTimeout(function() {
+                    isReconnecting = false;
+                    connect();
+                }, 2000);
+            } else {
+                term.write('\r\n\x1b[31mConnection lost. Refresh the page to reconnect.\x1b[0m\r\n');
+            }
+        }
+
+        function checkAndReconnect() {
+            if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+                console.log('Connection lost, attempting to reconnect...');
+                reconnectAttempts = 0;
+                connect();
+            }
+        }
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                console.log('Page became visible, checking connection...');
+                checkAndReconnect();
+            }
+        });
+
+        window.addEventListener('focus', function() {
+            console.log('Window focused, checking connection...');
+            checkAndReconnect();
+        });
+
+        term.onData(function(data) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'input', data: data }));
+            }
+        });
+
+        term.onResize(function(size) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'resize', data: { rows: size.rows, cols: size.cols } }));
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            fitAddon.fit();
+        });
+
+        function startHeartbeat() {
+            stopHeartbeat();
+            
+            pingIntervalId = setInterval(function() {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'ping' }));
+                }
+            }, 20000);
+            
+            healthCheckIntervalId = setInterval(function() {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    const now = Date.now();
+                    if (lastPongTime > 0 && now - lastPongTime > 45000) {
+                        console.log('Connection appears dead (no pong received), reconnecting...');
+                        ws.close();
+                    }
+                }
+            }, 5000);
+        }
+        
+        function stopHeartbeat() {
+            if (pingIntervalId) {
+                clearInterval(pingIntervalId);
+                pingIntervalId = null;
+            }
+            if (healthCheckIntervalId) {
+                clearInterval(healthCheckIntervalId);
+                healthCheckIntervalId = null;
+            }
+        }
+
+        connect();
+        term.focus();
+    </script>
+</body>
+</html>

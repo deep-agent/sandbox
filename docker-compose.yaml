@@ -1,0 +1,36 @@
+services:
+  sandbox:
+    container_name: sandbox
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    security_opt:
+      - seccomp:unconfined
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: "unless-stopped"
+    shm_size: "2gb"
+    mem_limit: "4g"
+    cpus: "2"
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      WORKSPACE: ${WORKSPACE:-/home/sandbox/workspace}
+      SUPERVISOR_CONF_DIR: ${SUPERVISOR_CONF_DIR:-/home/sandbox/app.supervisor.d}
+      USERDATA_DIR: ${USERDATA_DIR:-/home/sandbox/userdata}
+      TZ: ${TZ:-Asia/Shanghai}
+      JWT_SECRET: ${JWT_SECRET:-}
+      JWT_AUTH_REQUIRED: ${JWT_AUTH_REQUIRED:-}
+      ENABLE_MCP: ${ENABLE_MCP:-true}
+      ENABLE_BROWSER: ${ENABLE_BROWSER:-true}
+      ENABLE_VNC: ${ENABLE_VNC:-true}
+      APP_SERVICE_PORT: ${APP_SERVICE_PORT:-9000}
+    volumes:
+      - ${LOCAL_WORKSPACE:-./docker/volumes/workspace}:/home/sandbox/workspace
+      - ${LOCAL_SUPERVISOR_CONF:-./docker/volumes/app.supervisor.d}:/home/sandbox/app.supervisor.d
+      - ${LOCAL_USERDATA:-./docker/volumes/userdata}:/home/sandbox/userdata
+      - ${LOCAL_INIT_SCRIPTS:-./docker/volumes/init.d}:/docker-entrypoint.d:ro
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./web/terminal:/var/www/terminal:ro
