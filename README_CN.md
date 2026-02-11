@@ -139,18 +139,6 @@ sandbox/
 
 ## 快速开始
 
-### 本地开发
-
-```bash
-# 编译
-make build
-
-# 运行 Sandbox Server
-make run-server
-
-# 运行 MCP Hub
-make run-mcp
-```
 
 ### Docker 部署
 

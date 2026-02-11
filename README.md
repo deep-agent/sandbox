@@ -139,19 +139,6 @@ The container manages 8 processes via Supervisord, started in priority order:
 
 ## Quick Start
 
-### Local Development
-
-```bash
-# Build
-make build
-
-# Run Sandbox Server
-make run-server
-
-# Run MCP Hub
-make run-mcp
-```
-
 ### Docker Deployment
 
 ```bash
