@@ -10,8 +10,6 @@ type Sandbox interface {
 	BrowserController
 }
 
-var _ Sandbox = (*Client)(nil)
-
 type ContextProvider interface {
 	GetContext() (*model.SandboxContext, error)
 }

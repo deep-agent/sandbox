@@ -1,4 +1,4 @@
-package sandbox
+package http
 
 import (
 	"bytes"
@@ -9,9 +9,13 @@ import (
 	"os"
 	"time"
 
+	sandbox "github.com/deep-agent/sandbox/sdk/go"
+
 	"github.com/deep-agent/sandbox/model"
 	"github.com/golang-jwt/jwt/v5"
 )
+
+var _ sandbox.Sandbox = (*Client)(nil)
 
 type tokenProvider func() (string, error)
 

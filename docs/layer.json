@@ -1,0 +1,93 @@
+{
+  "name": "Sandbox",
+  "description": "An Sandbox Execution Environment for AI Agents",
+  "layers": [
+    {
+      "name": "Client",
+      "components": [
+        {
+          "name": "MCP Client (Eino)",
+          "icon": "MCP-Client"
+        },
+        {
+          "name": "Sandbox SDK",
+          "icon": "sdk"
+        }
+      ]
+    },
+    {
+      "name": "Nginx Gateway",
+      "components": [
+        {
+          "name": "Routing",
+          "icon": "Routing"
+        },
+        {
+          "name": "Reverse Proxy",
+          "icon": "Proxy"
+        },
+        {
+          "name": "Static Resources",
+          "icon": "Static"
+        }
+      ]
+    },
+    {
+      "name": "Protocol layer",
+      "components": [
+        {
+          "name": "Sandbox API Server",
+          "icon": "server",
+          "components": [
+            {
+              "name": "HTTP",
+              "icon": "HTTP"
+            },
+            {
+              "name": "WebSocket",
+              "icon": "WebSocket"
+            }
+          ]
+        },
+        {
+          "name": "MCP Server",
+          "icon": "MCP-Server"
+        }
+      ]
+    },
+    {
+      "name": "Services layer",
+      "components": [
+        {
+          "name": "Browser",
+          "icon": "framework"
+        },
+        {
+          "name": "Bash",
+          "icon": "shell"
+        },
+        {
+          "name": "File System",
+          "icon": "filesystem"
+        },
+        {
+          "name": "LSP",
+          "icon": "lsp"
+        },
+        {
+          "name": "VNC",
+          "icon": "vnc"
+        }
+      ]
+    },
+    {
+      "name": "Infrastructure",
+      "components": [
+        {
+          "name": "Debian",
+          "icon": "system"
+        }
+      ]
+    }
+  ]
+}
