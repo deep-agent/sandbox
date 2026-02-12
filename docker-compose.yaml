@@ -26,6 +26,7 @@ services:
       ENABLE_MCP: ${ENABLE_MCP:-true}
       ENABLE_BROWSER: ${ENABLE_BROWSER:-true}
       ENABLE_VNC: ${ENABLE_VNC:-true}
+      ENABLE_CDP_PROXY: ${ENABLE_CDP_PROXY:-true}
       APP_SERVICE_PORT: ${APP_SERVICE_PORT:-9000}
     volumes:
       - ${LOCAL_WORKSPACE:-./docker/volumes/workspace}:/home/sandbox/workspace

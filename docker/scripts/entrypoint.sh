@@ -9,9 +9,26 @@ mkdir -p /home/sandbox/userdata
 export APP_SERVICE_PORT="${APP_SERVICE_PORT:-9000}"
 echo "APP_SERVICE_PORT=${APP_SERVICE_PORT}"
 
+if [ "${ENABLE_CDP_PROXY:-true}" = "true" ]; then
+    echo "CDP proxy enabled"
+    export CDP_LOCATION_BLOCK='location /cdp/ {
+            proxy_pass http://127.0.0.1:9222/;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_read_timeout 86400s;
+            proxy_send_timeout 86400s;
+        }'
+else
+    echo "CDP proxy disabled by ENABLE_CDP_PROXY=false"
+    export CDP_LOCATION_BLOCK=""
+fi
+
 NGINX_TEMPLATE="/etc/nginx/nginx.conf"
 NGINX_RUNTIME="/tmp/nginx.runtime.conf"
-envsubst '${APP_SERVICE_PORT}' < "$NGINX_TEMPLATE" > "$NGINX_RUNTIME"
+envsubst '${APP_SERVICE_PORT} ${CDP_LOCATION_BLOCK}' < "$NGINX_TEMPLATE" > "$NGINX_RUNTIME"
 echo "Generated nginx runtime config: $NGINX_RUNTIME"
 
 SUPERVISOR_CONF="/etc/supervisor/conf.d/supervisord.conf"
