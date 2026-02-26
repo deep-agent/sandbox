@@ -54,8 +54,26 @@ func (e *Executor) SetTimeout(timeout time.Duration) {
 	e.timeout = timeout
 }
 
+func (e *Executor) validateWorkDir(workDir string) error {
+	info, err := os.Stat(workDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("working directory does not exist: %s", workDir)
+		}
+		return fmt.Errorf("failed to access working directory %s: %w", workDir, err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("working directory path is not a directory: %s", workDir)
+	}
+	return nil
+}
+
 func (e *Executor) ExecuteBackground(ctx context.Context, command string, workDir string, timeout time.Duration) (*ExecResult, error) {
 	startTime := time.Now()
+
+	if err := e.validateWorkDir(workDir); err != nil {
+		return nil, err
+	}
 
 	outputDir := filepath.Join(workDir, ".logs", "background_outputs")
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
@@ -103,6 +121,10 @@ func (e *Executor) ExecuteBackground(ctx context.Context, command string, workDi
 
 func (e *Executor) Execute(ctx context.Context, command string, workDir string, truncateOpts *TruncateOptions) (*ExecResult, error) {
 	startTime := time.Now()
+
+	if err := e.validateWorkDir(workDir); err != nil {
+		return nil, err
+	}
 
 	if e.timeout > 0 {
 		var cancel context.CancelFunc
@@ -171,6 +193,10 @@ func (e *Executor) buildResultWithTruncate(ctx context.Context, stdoutStr, stder
 
 func (e *Executor) ExecuteStream(ctx context.Context, command string, workDir string, onChunk StreamCallback, truncateOpts *TruncateOptions) (*ExecResult, error) {
 	startTime := time.Now()
+
+	if err := e.validateWorkDir(workDir); err != nil {
+		return nil, err
+	}
 
 	if e.timeout > 0 {
 		var cancel context.CancelFunc
