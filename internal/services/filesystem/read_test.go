@@ -10,7 +10,7 @@ import (
 
 func TestReadFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	content := "Hello, World!\nLine 2\nLine 3"
 	filePath := filepath.Join(tmpDir, "test.txt")
@@ -30,7 +30,7 @@ func TestReadFile(t *testing.T) {
 
 func TestReadFileEmpty(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	filePath := filepath.Join(tmpDir, "empty.txt")
 	if err := os.WriteFile(filePath, []byte(""), 0644); err != nil {
@@ -49,7 +49,7 @@ func TestReadFileEmpty(t *testing.T) {
 
 func TestReadFileNotExist(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	_, err := m.ReadFile(filepath.Join(tmpDir, "nonexistent.txt"))
 	if err == nil {
@@ -59,7 +59,7 @@ func TestReadFileNotExist(t *testing.T) {
 
 func TestReadFileBase64(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	content := []byte{0x00, 0x01, 0x02, 0xFF, 0xFE, 0xFD}
 	filePath := filepath.Join(tmpDir, "binary.bin")
@@ -80,7 +80,7 @@ func TestReadFileBase64(t *testing.T) {
 
 func TestReadFileBase64Text(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	content := "Hello, World!"
 	filePath := filepath.Join(tmpDir, "text.txt")
@@ -101,7 +101,7 @@ func TestReadFileBase64Text(t *testing.T) {
 
 func TestReadFileBase64NotExist(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	_, err := m.ReadFileBase64(filepath.Join(tmpDir, "nonexistent.txt"))
 	if err == nil {
@@ -111,7 +111,7 @@ func TestReadFileBase64NotExist(t *testing.T) {
 
 func TestReadFileWithOptionsBasic(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	lines := []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5"}
 	content := strings.Join(lines, "\n")
@@ -132,7 +132,7 @@ func TestReadFileWithOptionsBasic(t *testing.T) {
 
 func TestReadFileWithOptionsOffset(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	lines := []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5"}
 	content := strings.Join(lines, "\n")
@@ -161,7 +161,7 @@ func TestReadFileWithOptionsOffset(t *testing.T) {
 
 func TestReadFileWithOptionsLimit(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	lines := []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5"}
 	content := strings.Join(lines, "\n")
@@ -190,7 +190,7 @@ func TestReadFileWithOptionsLimit(t *testing.T) {
 
 func TestReadFileWithOptionsOffsetAndLimit(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	lines := []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5"}
 	content := strings.Join(lines, "\n")
@@ -215,7 +215,7 @@ func TestReadFileWithOptionsOffsetAndLimit(t *testing.T) {
 
 func TestReadFileWithOptionsLineNumbers(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	lines := []string{"Line 1", "Line 2", "Line 3"}
 	content := strings.Join(lines, "\n")
@@ -239,7 +239,7 @@ func TestReadFileWithOptionsLineNumbers(t *testing.T) {
 
 func TestReadFileWithOptionsMaxLineLength(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	longLine := strings.Repeat("a", 100)
 	filePath := filepath.Join(tmpDir, "longline.txt")
@@ -264,7 +264,7 @@ func TestReadFileWithOptionsMaxLineLength(t *testing.T) {
 
 func TestReadFileWithOptionsTotalLine(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	lines := []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5"}
 	content := strings.Join(lines, "\n")
@@ -285,7 +285,7 @@ func TestReadFileWithOptionsTotalLine(t *testing.T) {
 
 func TestReadFileWithOptionsNotExist(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	_, err := m.ReadFileWithOptions(filepath.Join(tmpDir, "nonexistent.txt"), ReadOptions{})
 	if err == nil {

@@ -124,7 +124,7 @@ func TestMatchGlobPattern(t *testing.T) {
 
 func TestGlobWithWalk(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	subDir := filepath.Join(tmpDir, "subdir")
 	if err := os.MkdirAll(subDir, 0755); err != nil {
@@ -207,7 +207,7 @@ func TestGlobWithWalk(t *testing.T) {
 
 func TestGlobWithWalkDoubleStarPattern(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	subDir := filepath.Join(tmpDir, "a", "b")
 	if err := os.MkdirAll(subDir, 0755); err != nil {

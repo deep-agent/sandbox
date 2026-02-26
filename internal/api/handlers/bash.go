@@ -31,12 +31,20 @@ func (h *BashHandler) ExecCommand(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
+	if req.Cwd == "" {
+		c.JSON(http.StatusBadRequest, model.Response{
+			Code:    400,
+			Message: "cwd is required",
+		})
+		return
+	}
+
 	if req.RunInBackground {
 		timeout := 10 * time.Minute
 		if req.TimeoutMS > 0 {
 			timeout = time.Duration(req.TimeoutMS) * time.Millisecond
 		}
-		result, err := h.executor.ExecuteBackground(ctx, req.Command, timeout)
+		result, err := h.executor.ExecuteBackground(ctx, req.Command, req.Cwd, timeout)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, model.Response{
 				Code:    500,
@@ -59,7 +67,7 @@ func (h *BashHandler) ExecCommand(ctx context.Context, c *app.RequestContext) {
 		h.executor.SetTimeout(time.Duration(req.TimeoutMS) * time.Millisecond)
 	}
 
-	result, err := h.executor.Execute(ctx, req.Command, nil)
+	result, err := h.executor.Execute(ctx, req.Command, req.Cwd, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.Response{
 			Code:    500,
@@ -105,6 +113,14 @@ func (h *BashHandler) ExecCommandStream(ctx context.Context, c *app.RequestConte
 		return
 	}
 
+	if req.Cwd == "" {
+		c.JSON(http.StatusBadRequest, model.Response{
+			Code:    400,
+			Message: "cwd is required",
+		})
+		return
+	}
+
 	if req.TimeoutMS > 0 {
 		h.executor.SetTimeout(time.Duration(req.TimeoutMS) * time.Millisecond)
 	}
@@ -128,7 +144,7 @@ func (h *BashHandler) ExecCommandStream(ctx context.Context, c *app.RequestConte
 		})
 	}
 
-	result, err := h.executor.ExecuteStream(ctx, req.Command, onChunk, nil)
+	result, err := h.executor.ExecuteStream(ctx, req.Command, req.Cwd, onChunk, nil)
 
 	if err != nil {
 		sendEvent("error", map[string]string{"message": err.Error()})

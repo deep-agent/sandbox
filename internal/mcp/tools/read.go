@@ -23,7 +23,7 @@ func ReadToolDef() mcp.Tool {
 	)
 }
 
-func ReadHandler(workspace string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func ReadHandler() func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		filePath, err := request.RequireString("file_path")
 		if err != nil {
@@ -33,7 +33,7 @@ func ReadHandler(workspace string) func(ctx context.Context, request mcp.CallToo
 		offset := int(request.GetFloat("offset", 1))
 		limit := int(request.GetFloat("limit", 2000))
 
-		fileManager := filesystem.NewManager(workspace)
+		fileManager := filesystem.NewManager()
 		result, err := fileManager.ReadFileWithOptions(filePath, filesystem.ReadOptions{
 			Offset:         offset,
 			Limit:          limit,

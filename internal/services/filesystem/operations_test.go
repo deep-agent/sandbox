@@ -8,7 +8,7 @@ import (
 
 func TestListDir(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	subDir := filepath.Join(tmpDir, "subdir")
 	if err := os.MkdirAll(subDir, 0755); err != nil {
@@ -52,7 +52,7 @@ func TestListDir(t *testing.T) {
 
 func TestListDirEmpty(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	files, err := m.ListDir(tmpDir)
 	if err != nil {
@@ -66,7 +66,7 @@ func TestListDirEmpty(t *testing.T) {
 
 func TestListDirNotExist(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	_, err := m.ListDir(filepath.Join(tmpDir, "nonexistent"))
 	if err == nil {
@@ -76,7 +76,7 @@ func TestListDirNotExist(t *testing.T) {
 
 func TestDeleteFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	filePath := filepath.Join(tmpDir, "to_delete.txt")
 	if err := os.WriteFile(filePath, []byte("delete me"), 0644); err != nil {
@@ -94,7 +94,7 @@ func TestDeleteFile(t *testing.T) {
 
 func TestDeleteFileDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	dirPath := filepath.Join(tmpDir, "dir_to_delete")
 	if err := os.MkdirAll(dirPath, 0755); err != nil {
@@ -116,7 +116,7 @@ func TestDeleteFileDirectory(t *testing.T) {
 
 func TestMoveFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	srcPath := filepath.Join(tmpDir, "source.txt")
 	dstPath := filepath.Join(tmpDir, "destination.txt")
@@ -146,7 +146,7 @@ func TestMoveFile(t *testing.T) {
 
 func TestMoveFileSourceNotExist(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	err := m.MoveFile(filepath.Join(tmpDir, "nonexistent.txt"), filepath.Join(tmpDir, "dest.txt"))
 	if err == nil {
@@ -156,7 +156,7 @@ func TestMoveFileSourceNotExist(t *testing.T) {
 
 func TestCopyFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	srcPath := filepath.Join(tmpDir, "source.txt")
 	dstPath := filepath.Join(tmpDir, "copy.txt")
@@ -189,7 +189,7 @@ func TestCopyFile(t *testing.T) {
 
 func TestCopyFileCreatesDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	srcPath := filepath.Join(tmpDir, "source.txt")
 	dstPath := filepath.Join(tmpDir, "newdir", "subdir", "copy.txt")
@@ -209,7 +209,7 @@ func TestCopyFileCreatesDirectory(t *testing.T) {
 
 func TestCopyFileSourceNotExist(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	err := m.CopyFile(filepath.Join(tmpDir, "nonexistent.txt"), filepath.Join(tmpDir, "dest.txt"))
 	if err == nil {
@@ -219,7 +219,7 @@ func TestCopyFileSourceNotExist(t *testing.T) {
 
 func TestExists(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	filePath := filepath.Join(tmpDir, "exists.txt")
 	if err := os.WriteFile(filePath, []byte("content"), 0644); err != nil {
@@ -237,7 +237,7 @@ func TestExists(t *testing.T) {
 
 func TestExistsDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	dirPath := filepath.Join(tmpDir, "existsdir")
 	if err := os.MkdirAll(dirPath, 0755); err != nil {
@@ -251,7 +251,7 @@ func TestExistsDirectory(t *testing.T) {
 
 func TestMkDir(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	dirPath := filepath.Join(tmpDir, "newdir")
 	if err := m.MkDir(dirPath); err != nil {
@@ -270,7 +270,7 @@ func TestMkDir(t *testing.T) {
 
 func TestMkDirNested(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	dirPath := filepath.Join(tmpDir, "a", "b", "c")
 	if err := m.MkDir(dirPath); err != nil {
@@ -289,7 +289,7 @@ func TestMkDirNested(t *testing.T) {
 
 func TestMkDirAlreadyExists(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManager(tmpDir)
+	m := NewManager()
 
 	dirPath := filepath.Join(tmpDir, "existsdir")
 	if err := os.MkdirAll(dirPath, 0755); err != nil {

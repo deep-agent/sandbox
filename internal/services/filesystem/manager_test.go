@@ -5,7 +5,7 @@ import (
 )
 
 func TestValidatePath(t *testing.T) {
-	m := NewManager("/tmp/workspace")
+	m := NewManager()
 
 	tests := []struct {
 		name      string

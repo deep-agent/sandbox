@@ -17,8 +17,13 @@ func (c *Client) BashExec(req *model.BashExecRequest) (*model.BashExecResult, er
 	}
 	c.bashExecutor.SetTimeout(timeout)
 
+	cwd := req.Cwd
+	if cwd == "" {
+		cwd = c.workDir
+	}
+
 	if req.RunInBackground {
-		result, err := c.bashExecutor.ExecuteBackground(ctx, req.Command, timeout)
+		result, err := c.bashExecutor.ExecuteBackground(ctx, req.Command, cwd, timeout)
 		if err != nil {
 			return nil, err
 		}
@@ -34,7 +39,7 @@ func (c *Client) BashExec(req *model.BashExecRequest) (*model.BashExecResult, er
 		MaxBytes: 100000,
 	}
 
-	result, err := c.bashExecutor.Execute(ctx, req.Command, truncateOpts)
+	result, err := c.bashExecutor.Execute(ctx, req.Command, cwd, truncateOpts)
 	if err != nil {
 		return nil, err
 	}

@@ -8,15 +8,10 @@ import (
 )
 
 func TestNewExecutor(t *testing.T) {
-	workDir := t.TempDir()
-	executor := NewExecutor(workDir)
+	executor := NewExecutor()
 
 	if executor == nil {
 		t.Fatal("NewExecutor returned nil")
-	}
-
-	if executor.workDir != workDir {
-		t.Errorf("expected workDir %s, got %s", workDir, executor.workDir)
 	}
 
 	if executor.timeout != 30*time.Second {
@@ -25,8 +20,7 @@ func TestNewExecutor(t *testing.T) {
 }
 
 func TestSetTimeout(t *testing.T) {
-	workDir := t.TempDir()
-	executor := NewExecutor(workDir)
+	executor := NewExecutor()
 
 	newTimeout := 60 * time.Second
 	executor.SetTimeout(newTimeout)
@@ -36,21 +30,12 @@ func TestSetTimeout(t *testing.T) {
 	}
 }
 
-func TestGetWorkDir(t *testing.T) {
-	workDir := t.TempDir()
-	executor := NewExecutor(workDir)
-
-	if executor.GetWorkDir() != workDir {
-		t.Errorf("expected workDir %s, got %s", workDir, executor.GetWorkDir())
-	}
-}
-
 func TestExecute_EchoHello(t *testing.T) {
 	workDir := t.TempDir()
-	executor := NewExecutor(workDir)
+	executor := NewExecutor()
 
 	ctx := context.Background()
-	result, err := executor.Execute(ctx, "echo hello", nil)
+	result, err := executor.Execute(ctx, "echo hello", workDir, nil)
 
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
@@ -71,10 +56,10 @@ func TestExecute_EchoHello(t *testing.T) {
 
 func TestExecute_ExitCode(t *testing.T) {
 	workDir := t.TempDir()
-	executor := NewExecutor(workDir)
+	executor := NewExecutor()
 
 	ctx := context.Background()
-	result, err := executor.Execute(ctx, "exit 42", nil)
+	result, err := executor.Execute(ctx, "exit 42", workDir, nil)
 
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
@@ -87,12 +72,12 @@ func TestExecute_ExitCode(t *testing.T) {
 
 func TestExecute_Timeout(t *testing.T) {
 	workDir := t.TempDir()
-	executor := NewExecutor(workDir)
+	executor := NewExecutor()
 	executor.SetTimeout(500 * time.Millisecond)
 
 	ctx := context.Background()
 	startTime := time.Now()
-	result, err := executor.Execute(ctx, "sleep 10", nil)
+	result, err := executor.Execute(ctx, "sleep 10", workDir, nil)
 	elapsed := time.Since(startTime)
 
 	if err != nil {
@@ -116,10 +101,10 @@ func TestExecute_Timeout(t *testing.T) {
 
 func TestExecute_Stderr(t *testing.T) {
 	workDir := t.TempDir()
-	executor := NewExecutor(workDir)
+	executor := NewExecutor()
 
 	ctx := context.Background()
-	result, err := executor.Execute(ctx, "echo error >&2", nil)
+	result, err := executor.Execute(ctx, "echo error >&2", workDir, nil)
 
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
@@ -132,7 +117,7 @@ func TestExecute_Stderr(t *testing.T) {
 
 func TestExecute_WithTruncate(t *testing.T) {
 	workDir := t.TempDir()
-	executor := NewExecutor(workDir)
+	executor := NewExecutor()
 
 	ctx := context.Background()
 	truncateOpts := &TruncateOptions{
@@ -140,7 +125,7 @@ func TestExecute_WithTruncate(t *testing.T) {
 		MaxBytes: 100,
 	}
 
-	result, err := executor.Execute(ctx, "echo -e 'line1\nline2\nline3\nline4'", truncateOpts)
+	result, err := executor.Execute(ctx, "echo -e 'line1\nline2\nline3\nline4'", workDir, truncateOpts)
 
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
@@ -278,10 +263,10 @@ func TestFormatMetadata_Empty(t *testing.T) {
 
 func TestExecute_DurationMs(t *testing.T) {
 	workDir := t.TempDir()
-	executor := NewExecutor(workDir)
+	executor := NewExecutor()
 
 	ctx := context.Background()
-	result, err := executor.Execute(ctx, "sleep 0.1", nil)
+	result, err := executor.Execute(ctx, "sleep 0.1", workDir, nil)
 
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
@@ -294,10 +279,10 @@ func TestExecute_DurationMs(t *testing.T) {
 
 func TestExecute_CombinedOutput(t *testing.T) {
 	workDir := t.TempDir()
-	executor := NewExecutor(workDir)
+	executor := NewExecutor()
 
 	ctx := context.Background()
-	result, err := executor.Execute(ctx, "echo stdout; echo stderr >&2", nil)
+	result, err := executor.Execute(ctx, "echo stdout; echo stderr >&2", workDir, nil)
 
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)

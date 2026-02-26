@@ -11,10 +11,11 @@ import (
 var _ sandbox.Sandbox = (*Client)(nil)
 
 type Client struct {
-	bashExecutor  *bash.Executor
-	fileManager   *filesystem.Manager
-	browserCtrl   *browser.Controller
-	sandboxCtx    *model.SandboxContext
+	bashExecutor *bash.Executor
+	fileManager  *filesystem.Manager
+	browserCtrl  *browser.Controller
+	sandboxCtx   *model.SandboxContext
+	workDir      string
 }
 
 type Option func(*Client)
@@ -33,11 +34,12 @@ func WithSandboxContext(ctx *model.SandboxContext) Option {
 
 func NewClient(workDir string, opts ...Option) *Client {
 	c := &Client{
-		bashExecutor: bash.NewExecutor(workDir),
-		fileManager:  filesystem.NewManager(workDir),
+		bashExecutor: bash.NewExecutor(),
+		fileManager:  filesystem.NewManager(),
 		sandboxCtx: &model.SandboxContext{
-			Workspace: workDir,
+			HomeDir: workDir,
 		},
+		workDir: workDir,
 	}
 
 	for _, opt := range opts {

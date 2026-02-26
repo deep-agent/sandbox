@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/deep-agent/sandbox/internal/services/filesystem"
+	"github.com/deep-agent/sandbox/pkg/session"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -37,8 +38,8 @@ func GrepToolDef() mcp.Tool {
 	)
 }
 
-func GrepHandler(workspace string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	manager := filesystem.NewManager(workspace)
+func GrepHandler(homeDir string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	manager := filesystem.NewManager()
 
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		pattern, err := request.RequireString("pattern")
@@ -46,9 +47,14 @@ func GrepHandler(workspace string) func(ctx context.Context, request mcp.CallToo
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 
+		searchPath := request.GetString("path", "")
+		if searchPath == "" {
+			searchPath = session.GetWorkspaceFromHeader(request.Header, homeDir)
+		}
+
 		opts := filesystem.GrepOptions{
 			Pattern:         pattern,
-			Path:            request.GetString("path", ""),
+			Path:            searchPath,
 			Glob:            request.GetString("glob", ""),
 			CaseInsensitive: request.GetBool("case_insensitive", false),
 			ContextLines:    int(request.GetFloat("context_lines", 0)),

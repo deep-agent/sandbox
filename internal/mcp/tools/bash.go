@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/deep-agent/sandbox/internal/services/bash"
+	"github.com/deep-agent/sandbox/pkg/session"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -28,22 +29,24 @@ func BashToolDef() mcp.Tool {
 	)
 }
 
-func BashHandler(workspace string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func BashHandler(homeDir string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		command, err := request.RequireString("command")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 
+		cwd := session.GetWorkspaceFromHeader(request.Header, homeDir)
+
 		runInBackground := request.GetBool("run_in_background", false)
-		executor := bash.NewExecutor(workspace)
+		executor := bash.NewExecutor()
 
 		if runInBackground {
 			timeout := 10 * time.Minute
 			if to := request.GetFloat("timeout_ms", 0); to > 0 {
 				timeout = time.Duration(to) * time.Millisecond
 			}
-			result, err := executor.ExecuteBackground(ctx, command, timeout)
+			result, err := executor.ExecuteBackground(ctx, command, cwd, timeout)
 			if err != nil {
 				return mcp.NewToolResultError("Error: " + err.Error()), nil
 			}
@@ -60,7 +63,7 @@ func BashHandler(workspace string) func(ctx context.Context, request mcp.CallToo
 		}
 		executor.SetTimeout(time.Duration(timeoutMS) * time.Millisecond)
 
-		result, err := executor.Execute(ctx, command, &bash.TruncateOptions{MaxLines: 2000, MaxBytes: 50 * 1024})
+		result, err := executor.Execute(ctx, command, cwd, &bash.TruncateOptions{MaxLines: 2000, MaxBytes: 50 * 1024})
 		if err != nil {
 			return mcp.NewToolResultError("Error: " + err.Error()), nil
 		}

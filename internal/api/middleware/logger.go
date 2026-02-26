@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/deep-agent/sandbox/pkg/session"
 )
 
 func Logger() app.HandlerFunc {
@@ -15,8 +16,9 @@ func Logger() app.HandlerFunc {
 		method := string(c.Request.Method())
 		query := string(c.Request.URI().QueryString())
 		body := c.Request.Body()
+		sessionID := session.GetSessionIDFromHertz(&c.Request.Header)
 
-		log.Printf("[REQ] %s %s query=%s body=%s", method, path, query, truncate(string(body), 1024))
+		log.Printf("[REQ][SessionID:%s] %s %s query=%s body=%s", sessionID, method, path, query, truncate(string(body), 1024))
 
 		c.Next(ctx)
 
@@ -24,7 +26,7 @@ func Logger() app.HandlerFunc {
 		status := c.Response.StatusCode()
 		respBody := c.Response.Body()
 
-		log.Printf("[RESP] %s %s status=%d latency=%v body=%s", method, path, status, latency, truncate(string(respBody), 1024))
+		log.Printf("[RESP][SessionID:%s] %s %s status=%d latency=%v body=%s", sessionID, method, path, status, latency, truncate(string(respBody), 1024))
 		log.Printf("================================\n")
 	}
 }

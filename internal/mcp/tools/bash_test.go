@@ -29,7 +29,7 @@ func TestBashTool_Tool(t *testing.T) {
 		}
 	}
 
-	optionalParams := []string{"timeout", "description"}
+	optionalParams := []string{"timeout_ms", "description"}
 	for _, param := range optionalParams {
 		if _, ok := tool.InputSchema.Properties[param]; !ok {
 			t.Errorf("expected optional parameter '%s' in schema", param)
@@ -95,7 +95,7 @@ func TestBashTool_Handler_Timeout(t *testing.T) {
 	handler := BashHandler(os.TempDir())
 
 	request := mockCallToolRequest(map[string]interface{}{
-		"command": "sleep 5",
+		"command":    "sleep 5",
 		"timeout_ms": float64(100),
 	})
 
@@ -120,7 +120,7 @@ func TestBashTool_Handler_TimeoutMax(t *testing.T) {
 	handler := BashHandler(os.TempDir())
 
 	request := mockCallToolRequest(map[string]interface{}{
-		"command": "echo test",
+		"command":    "echo test",
 		"timeout_ms": float64(999999999),
 	})
 

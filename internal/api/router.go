@@ -29,13 +29,13 @@ func NewRouter(cfg *config.Config) *Router {
 	return &Router{
 		server:          h,
 		cfg:             cfg,
-		terminalHandler: handlers.NewTerminalHandler(cfg.Workspace),
+		terminalHandler: handlers.NewTerminalHandler(cfg.HomeDir),
 	}
 }
 
 func (r *Router) Setup() {
-	bashExecutor := bash.NewExecutor(r.cfg.Workspace)
-	fileManager := filesystem.NewManager(r.cfg.Workspace)
+	bashExecutor := bash.NewExecutor()
+	fileManager := filesystem.NewManager()
 	browserController := browser.NewController(fmt.Sprintf("ws://localhost:%d", r.cfg.BrowserCDPPort))
 	webFetcher := web.NewFetcher()
 	webSearcher := web.NewSearcher()

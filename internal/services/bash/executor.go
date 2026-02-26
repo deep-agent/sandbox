@@ -29,7 +29,6 @@ type StreamChunk struct {
 type StreamCallback func(chunk StreamChunk)
 
 type Executor struct {
-	workDir string
 	timeout time.Duration
 }
 
@@ -45,9 +44,8 @@ type ExecResult struct {
 	OutputFile string `json:"output_file,omitempty"`
 }
 
-func NewExecutor(workDir string) *Executor {
+func NewExecutor() *Executor {
 	return &Executor{
-		workDir: workDir,
 		timeout: 30 * time.Second,
 	}
 }
@@ -56,14 +54,10 @@ func (e *Executor) SetTimeout(timeout time.Duration) {
 	e.timeout = timeout
 }
 
-func (e *Executor) GetWorkDir() string {
-	return e.workDir
-}
-
-func (e *Executor) ExecuteBackground(ctx context.Context, command string, timeout time.Duration) (*ExecResult, error) {
+func (e *Executor) ExecuteBackground(ctx context.Context, command string, workDir string, timeout time.Duration) (*ExecResult, error) {
 	startTime := time.Now()
 
-	outputDir := filepath.Join(e.workDir, ".logs", "background_outputs")
+	outputDir := filepath.Join(workDir, ".logs", "background_outputs")
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create output directory: %w", err)
 	}
@@ -72,7 +66,7 @@ func (e *Executor) ExecuteBackground(ctx context.Context, command string, timeou
 
 	wrappedCommand := fmt.Sprintf("script -q -f -c %q %q", command, outputFile)
 	cmd := exec.Command("bash", "-c", wrappedCommand)
-	cmd.Dir = e.workDir
+	cmd.Dir = workDir
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}
@@ -107,7 +101,7 @@ func (e *Executor) ExecuteBackground(ctx context.Context, command string, timeou
 	}, nil
 }
 
-func (e *Executor) Execute(ctx context.Context, command string, truncateOpts *TruncateOptions) (*ExecResult, error) {
+func (e *Executor) Execute(ctx context.Context, command string, workDir string, truncateOpts *TruncateOptions) (*ExecResult, error) {
 	startTime := time.Now()
 
 	if e.timeout > 0 {
@@ -117,7 +111,7 @@ func (e *Executor) Execute(ctx context.Context, command string, truncateOpts *Tr
 	}
 
 	cmd := exec.CommandContext(ctx, "bash", "-c", command)
-	cmd.Dir = e.workDir
+	cmd.Dir = workDir
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}
@@ -175,7 +169,7 @@ func (e *Executor) buildResultWithTruncate(ctx context.Context, stdoutStr, stder
 	return result, nil
 }
 
-func (e *Executor) ExecuteStream(ctx context.Context, command string, onChunk StreamCallback, truncateOpts *TruncateOptions) (*ExecResult, error) {
+func (e *Executor) ExecuteStream(ctx context.Context, command string, workDir string, onChunk StreamCallback, truncateOpts *TruncateOptions) (*ExecResult, error) {
 	startTime := time.Now()
 
 	if e.timeout > 0 {
@@ -185,7 +179,7 @@ func (e *Executor) ExecuteStream(ctx context.Context, command string, onChunk St
 	}
 
 	cmd := exec.CommandContext(ctx, "bash", "-c", command)
-	cmd.Dir = e.workDir
+	cmd.Dir = workDir
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}

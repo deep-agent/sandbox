@@ -8,7 +8,7 @@ import (
 
 func TestEditFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	manager := NewManager(tmpDir)
+	manager := NewManager()
 
 	tests := []struct {
 		name           string
@@ -151,7 +151,7 @@ func TestEditFile(t *testing.T) {
 
 func TestEditFile_FileNotFound(t *testing.T) {
 	tmpDir := t.TempDir()
-	manager := NewManager(tmpDir)
+	manager := NewManager()
 
 	err := manager.EditFile(filepath.Join(tmpDir, "nonexistent.txt"), "old", "new", EditOptions{})
 	if err == nil {
@@ -164,7 +164,7 @@ func TestEditFile_FileNotFound(t *testing.T) {
 
 func TestEditFile_LineTrimmedMatching(t *testing.T) {
 	tmpDir := t.TempDir()
-	manager := NewManager(tmpDir)
+	manager := NewManager()
 
 	initialContent := "    func foo() {\n        return 1\n    }"
 	testFile := filepath.Join(tmpDir, "trimmed.txt")
@@ -193,7 +193,7 @@ func TestEditFile_LineTrimmedMatching(t *testing.T) {
 
 func TestEditFile_PreservesOtherContent(t *testing.T) {
 	tmpDir := t.TempDir()
-	manager := NewManager(tmpDir)
+	manager := NewManager()
 
 	initialContent := "header\n\nfunc old() {}\n\nfooter"
 	testFile := filepath.Join(tmpDir, "preserve.txt")

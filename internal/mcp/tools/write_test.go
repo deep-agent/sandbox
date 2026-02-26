@@ -38,7 +38,7 @@ func TestWriteTool_Handler_SimpleWrite(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	handler := WriteHandler(tmpDir)
+	handler := WriteHandler()
 
 	testFile := filepath.Join(tmpDir, "test.txt")
 	request := mockCallToolRequest(map[string]interface{}{
@@ -77,7 +77,7 @@ func TestWriteTool_Handler_OverwriteExisting(t *testing.T) {
 		t.Fatalf("failed to create existing file: %v", err)
 	}
 
-	handler := WriteHandler(tmpDir)
+	handler := WriteHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"file_path": testFile,
@@ -110,7 +110,7 @@ func TestWriteTool_Handler_CreateDirectory(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	handler := WriteHandler(tmpDir)
+	handler := WriteHandler()
 
 	testFile := filepath.Join(tmpDir, "subdir", "nested", "test.txt")
 	request := mockCallToolRequest(map[string]interface{}{
@@ -144,7 +144,7 @@ func TestWriteTool_Handler_EmptyContent(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	handler := WriteHandler(tmpDir)
+	handler := WriteHandler()
 
 	testFile := filepath.Join(tmpDir, "empty.txt")
 	request := mockCallToolRequest(map[string]interface{}{
@@ -172,7 +172,7 @@ func TestWriteTool_Handler_EmptyContent(t *testing.T) {
 }
 
 func TestWriteTool_Handler_MissingFilePath(t *testing.T) {
-	handler := WriteHandler(os.TempDir())
+	handler := WriteHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"content": "some content",
@@ -195,7 +195,7 @@ func TestWriteTool_Handler_MissingContent(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	handler := WriteHandler(tmpDir)
+	handler := WriteHandler()
 
 	testFile := filepath.Join(tmpDir, "test.txt")
 	request := mockCallToolRequest(map[string]interface{}{
@@ -219,7 +219,7 @@ func TestWriteTool_Handler_MultilineContent(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	handler := WriteHandler(tmpDir)
+	handler := WriteHandler()
 
 	testFile := filepath.Join(tmpDir, "multiline.txt")
 	multilineContent := "line1\nline2\nline3\n"
@@ -254,7 +254,7 @@ func TestWriteTool_Handler_SuccessMessage(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	handler := WriteHandler(tmpDir)
+	handler := WriteHandler()
 
 	testFile := filepath.Join(tmpDir, "success.txt")
 	request := mockCallToolRequest(map[string]interface{}{
@@ -283,7 +283,7 @@ func TestWriteTool_Handler_UnicodeContent(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	handler := WriteHandler(tmpDir)
+	handler := WriteHandler()
 
 	testFile := filepath.Join(tmpDir, "unicode.txt")
 	unicodeContent := "Hello 世界 🌍 مرحبا"

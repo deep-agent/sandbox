@@ -34,13 +34,9 @@ func (m *Manager) Glob(opts GlobOptions) (*GlobResult, error) {
 }
 
 func (m *Manager) GlobWithContext(ctx context.Context, opts GlobOptions) (*GlobResult, error) {
-	searchPath := m.baseDir
-	if opts.Path != "" {
-		if filepath.IsAbs(opts.Path) {
-			searchPath = opts.Path
-		} else {
-			searchPath = filepath.Join(m.baseDir, opts.Path)
-		}
+	searchPath := opts.Path
+	if searchPath == "" {
+		searchPath = "."
 	}
 
 	result, err := m.globWithRipgrep(ctx, searchPath, opts.Pattern, opts.Limit)

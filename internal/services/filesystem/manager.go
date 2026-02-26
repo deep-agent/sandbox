@@ -5,29 +5,18 @@ import (
 	"path/filepath"
 )
 
-type Manager struct {
-	baseDir string
-}
+type Manager struct{}
 
-func NewManager(baseDir string) *Manager {
-	return &Manager{
-		baseDir: baseDir,
-	}
+func NewManager() *Manager {
+	return &Manager{}
 }
 
 func (m *Manager) validatePath(path string) (string, error) {
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		return "", fmt.Errorf("invalid path: %w", err)
+	if path == "" {
+		return "", fmt.Errorf("invalid path: path cannot be empty")
 	}
 
-	// if !strings.HasPrefix(absPath, m.baseDir) {
-	// 	return "", fmt.Errorf("access denied: path outside workspace")
-	// }
+	cleanPath := filepath.Clean(path)
 
-	return absPath, nil
-}
-
-func (m *Manager) GetBaseDir() string {
-	return m.baseDir
+	return cleanPath, nil
 }

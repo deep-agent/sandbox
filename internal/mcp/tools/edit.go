@@ -28,7 +28,7 @@ func EditToolDef() mcp.Tool {
 	)
 }
 
-func EditHandler(workspace string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func EditHandler() func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		filePath, err := request.RequireString("file_path")
 		if err != nil {
@@ -47,7 +47,7 @@ func EditHandler(workspace string) func(ctx context.Context, request mcp.CallToo
 
 		replaceAll := request.GetBool("replace_all", false)
 
-		fileManager := filesystem.NewManager(workspace)
+		fileManager := filesystem.NewManager()
 		err = fileManager.EditFile(filePath, oldString, newString, filesystem.EditOptions{
 			ReplaceAll: replaceAll,
 		})

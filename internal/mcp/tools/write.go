@@ -21,7 +21,7 @@ func WriteToolDef() mcp.Tool {
 	)
 }
 
-func WriteHandler(workspace string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func WriteHandler() func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		filePath, err := request.RequireString("file_path")
 		if err != nil {
@@ -33,7 +33,7 @@ func WriteHandler(workspace string) func(ctx context.Context, request mcp.CallTo
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 
-		fileManager := filesystem.NewManager(workspace)
+		fileManager := filesystem.NewManager()
 		if err := fileManager.WriteFile(filePath, content); err != nil {
 			return mcp.NewToolResultError("Error: " + err.Error()), nil
 		}

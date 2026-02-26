@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/deep-agent/sandbox/pkg/session"
 	sandbox "github.com/deep-agent/sandbox/sdk/go"
 
 	"github.com/deep-agent/sandbox/model"
@@ -23,6 +24,7 @@ type Client struct {
 	baseURL       string
 	httpClient    *http.Client
 	tokenProvider tokenProvider
+	sessionID     string
 }
 
 type Option func(*Client)
@@ -63,9 +65,10 @@ func WithTimeout(timeout time.Duration) Option {
 	}
 }
 
-func NewClient(baseURL string, opts ...Option) *Client {
+func NewClient(baseURL, sessionID string, opts ...Option) *Client {
 	c := &Client{
-		baseURL: baseURL,
+		baseURL:   baseURL,
+		sessionID: sessionID,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -100,6 +103,10 @@ func (c *Client) doRequest(method, path string, body interface{}) (*response, er
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	if c.sessionID != "" {
+		req.Header.Set(session.HeaderSessionID, c.sessionID)
+	}
+
 	if c.tokenProvider != nil {
 		token, err := c.tokenProvider()
 		if err != nil {

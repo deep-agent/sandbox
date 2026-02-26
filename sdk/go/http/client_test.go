@@ -14,7 +14,7 @@ import (
 const testBaseURL = "http://localhost:8080"
 
 func TestNewClient(t *testing.T) {
-	client := NewClient(testBaseURL)
+	client := NewClient(testBaseURL, "test-session")
 
 	if client.baseURL != testBaseURL {
 		t.Errorf("expected baseURL %s, got %s", testBaseURL, client.baseURL)
@@ -30,7 +30,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestNewClientWithOptions(t *testing.T) {
-	client := NewClient(testBaseURL,
+	client := NewClient(testBaseURL, "test-session",
 		WithTimeout(60*time.Second),
 		WithSecret("test-secret"),
 	)
@@ -48,7 +48,7 @@ func TestWithSecretFromEnv(t *testing.T) {
 	os.Setenv("TEST_SECRET", "my-secret")
 	defer os.Unsetenv("TEST_SECRET")
 
-	client := NewClient(testBaseURL, WithSecretFromEnv("TEST_SECRET"))
+	client := NewClient(testBaseURL, "test-session", WithSecretFromEnv("TEST_SECRET"))
 
 	if client.tokenProvider == nil {
 		t.Error("expected tokenProvider to be set")
@@ -66,7 +66,7 @@ func TestWithSecretFromEnv(t *testing.T) {
 func TestWithSecretFromEnvEmpty(t *testing.T) {
 	os.Unsetenv("EMPTY_SECRET")
 
-	client := NewClient(testBaseURL, WithSecretFromEnv("EMPTY_SECRET"))
+	client := NewClient(testBaseURL, "test-session", WithSecretFromEnv("EMPTY_SECRET"))
 
 	token, err := client.tokenProvider()
 	if err != nil {
@@ -89,17 +89,16 @@ func TestGetContext(t *testing.T) {
 		resp := map[string]interface{}{
 			"code": 0,
 			"data": map[string]interface{}{
-				"home_dir":  "/home/sandbox",
-				"workspace": "/home/sandbox/workspace",
-				"os":        "linux",
-				"arch":      "amd64",
+				"home_dir": "/home/sandbox",
+				"os":       "linux",
+				"arch":     "amd64",
 			},
 		}
 		json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	ctx, err := client.GetContext()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -108,8 +107,11 @@ func TestGetContext(t *testing.T) {
 	if ctx.HomeDir != "/home/sandbox" {
 		t.Errorf("expected HomeDir /home/sandbox, got %s", ctx.HomeDir)
 	}
-	if ctx.Workspace != "/home/sandbox/workspace" {
-		t.Errorf("expected Workspace /home/sandbox/workspace, got %s", ctx.Workspace)
+	if ctx.OS != "linux" {
+		t.Errorf("expected OS linux, got %s", ctx.OS)
+	}
+	if ctx.Arch != "amd64" {
+		t.Errorf("expected Arch amd64, got %s", ctx.Arch)
 	}
 }
 
@@ -140,9 +142,10 @@ func TestBashExec(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	result, err := client.BashExec(&model.BashExecRequest{
 		Command: "echo hello",
+		Cwd:     "/tmp",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -179,7 +182,7 @@ func TestFileRead(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	result, err := client.FileRead(&model.FileReadRequest{
 		File: "/tmp/test.txt",
 	})
@@ -215,7 +218,7 @@ func TestFileWrite(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	err := client.FileWrite(&model.FileWriteRequest{
 		File:    "/tmp/test.txt",
 		Content: "new content",
@@ -244,7 +247,7 @@ func TestFileList(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	result, err := client.FileList(&model.FileListRequest{
 		Path: "/tmp",
 	})
@@ -268,7 +271,7 @@ func TestFileDelete(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	err := client.FileDelete(&model.FileDeleteRequest{Path: "/tmp/test.txt"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -293,7 +296,7 @@ func TestFileMove(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	err := client.FileMove(&model.FileMoveRequest{
 		Source:      "/tmp/old.txt",
 		Destination: "/tmp/new.txt",
@@ -314,7 +317,7 @@ func TestFileCopy(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	err := client.FileCopy(&model.FileCopyRequest{
 		Source:      "/tmp/src.txt",
 		Destination: "/tmp/dst.txt",
@@ -335,7 +338,7 @@ func TestMkDir(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	err := client.MkDir(&model.MkDirRequest{Path: "/tmp/newdir"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -358,7 +361,7 @@ func TestFileExists(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	result, err := client.FileExists("/tmp/test.txt")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -393,7 +396,7 @@ func TestGrepSearch(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	result, err := client.GrepSearch(&model.GrepRequest{
 		Pattern: "test",
 		Path:    "/tmp",
@@ -425,7 +428,7 @@ func TestBrowserGetInfo(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	info, err := client.BrowserGetInfo()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -454,7 +457,7 @@ func TestBrowserNavigate(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	err := client.BrowserNavigate(&model.BrowserNavigateRequest{
 		URL: "https://example.com",
 	})
@@ -479,7 +482,7 @@ func TestBrowserScreenshot(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	result, err := client.BrowserScreenshot(&model.BrowserScreenshotRequest{
 		Full: true,
 	})
@@ -499,7 +502,7 @@ func TestBrowserClick(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	err := client.BrowserClick(&model.BrowserClickRequest{Selector: "#btn"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -513,7 +516,7 @@ func TestBrowserType(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	err := client.BrowserType(&model.BrowserTypeRequest{
 		Selector: "#input",
 		Text:     "hello",
@@ -535,7 +538,7 @@ func TestBrowserEvaluate(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	result, err := client.BrowserEvaluate(&model.BrowserEvaluateRequest{
 		Expression: "document.title",
 	})
@@ -555,7 +558,7 @@ func TestBrowserScroll(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	err := client.BrowserScroll(&model.BrowserScrollRequest{X: 0, Y: 100})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -574,7 +577,7 @@ func TestBrowserGetHTML(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	result, err := client.BrowserGetHTML(&model.BrowserGetHTMLRequest{Selector: "body"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -592,7 +595,7 @@ func TestBrowserWaitVisible(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	err := client.BrowserWaitVisible(&model.BrowserWaitVisibleRequest{Selector: "#element"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -611,7 +614,7 @@ func TestBrowserGetCurrentURL(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	result, err := client.BrowserGetCurrentURL()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -634,7 +637,7 @@ func TestBrowserGetTitle(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	result, err := client.BrowserGetTitle()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -660,7 +663,7 @@ func TestBrowserGetPageInfo(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	info, err := client.BrowserGetPageInfo()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -686,7 +689,7 @@ func TestBrowserPDF(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	result, err := client.BrowserPDF()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -707,7 +710,7 @@ func TestAPIError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL)
+	client := NewClient(server.URL, "test-session")
 	_, err := client.GetContext()
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -736,6 +739,6 @@ func TestAuthorizationHeader(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, WithSecret("test-secret"))
+	client := NewClient(server.URL, "test-session", WithSecret("test-secret"))
 	_, _ = client.GetContext()
 }

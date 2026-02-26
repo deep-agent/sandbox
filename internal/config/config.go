@@ -11,14 +11,13 @@ type Config struct {
 	VNCServerPort     int
 	WebSocketPort     int
 	BrowserCDPPort    int
-	Workspace         string
 	HomeDir           string
 }
 
 func Load() *Config {
 	homeDir := os.Getenv("HOME")
 	if homeDir == "" {
-		homeDir = "/home/sandbox"
+		homeDir = "/home/sandbox/workspace"
 	}
 
 	return &Config{
@@ -27,7 +26,6 @@ func Load() *Config {
 		VNCServerPort:     getEnvInt("VNC_SERVER_PORT", 5900),
 		WebSocketPort:     getEnvInt("WEBSOCKET_PROXY_PORT", 6080),
 		BrowserCDPPort:    getEnvInt("BROWSER_REMOTE_DEBUGGING_PORT", 9222),
-		Workspace:         getEnv("WORKSPACE", homeDir),
 		HomeDir:           homeDir,
 	}
 }

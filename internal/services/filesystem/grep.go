@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -41,11 +40,7 @@ type GrepResult struct {
 func (m *Manager) Grep(ctx context.Context, opts GrepOptions) (*GrepResult, error) {
 	searchPath := opts.Path
 	if searchPath == "" {
-		searchPath = m.baseDir
-	}
-
-	if !filepath.IsAbs(searchPath) {
-		searchPath = filepath.Join(m.baseDir, searchPath)
+		searchPath = "."
 	}
 
 	var args []string

@@ -51,7 +51,7 @@ func TestReadTool_Handler_SimpleRead(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := ReadHandler(tmpDir)
+	handler := ReadHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"file_path": testFile,
@@ -91,7 +91,7 @@ func TestReadTool_Handler_LineNumbers(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := ReadHandler(tmpDir)
+	handler := ReadHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"file_path": testFile,
@@ -127,7 +127,7 @@ func TestReadTool_Handler_Offset(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := ReadHandler(tmpDir)
+	handler := ReadHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"file_path": testFile,
@@ -164,7 +164,7 @@ func TestReadTool_Handler_Limit(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := ReadHandler(tmpDir)
+	handler := ReadHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"file_path": testFile,
@@ -196,7 +196,7 @@ func TestReadTool_Handler_OffsetAndLimit(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := ReadHandler(tmpDir)
+	handler := ReadHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"file_path": testFile,
@@ -232,12 +232,12 @@ func TestReadTool_Handler_LineTruncation(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	testFile := filepath.Join(tmpDir, "test.txt")
-	longLine := strings.Repeat("a", 2500)
+	longLine := strings.Repeat("a", 25000)
 	if err := os.WriteFile(testFile, []byte(longLine), 0644); err != nil {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := ReadHandler(tmpDir)
+	handler := ReadHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"file_path": testFile,
@@ -266,7 +266,7 @@ func TestReadTool_Handler_EmptyFile(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := ReadHandler(tmpDir)
+	handler := ReadHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"file_path": testFile,
@@ -284,7 +284,7 @@ func TestReadTool_Handler_EmptyFile(t *testing.T) {
 }
 
 func TestReadTool_Handler_FileNotFound(t *testing.T) {
-	handler := ReadHandler(os.TempDir())
+	handler := ReadHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"file_path": "/nonexistent/file.txt",
@@ -301,7 +301,7 @@ func TestReadTool_Handler_FileNotFound(t *testing.T) {
 }
 
 func TestReadTool_Handler_MissingFilePath(t *testing.T) {
-	handler := ReadHandler(os.TempDir())
+	handler := ReadHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{})
 
@@ -332,7 +332,7 @@ func TestReadTool_Handler_DefaultLimit(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := ReadHandler(tmpDir)
+	handler := ReadHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"file_path": testFile,

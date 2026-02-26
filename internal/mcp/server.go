@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/deep-agent/sandbox/pkg/session"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -42,8 +43,9 @@ func loggingMiddleware(toolName string, next server.ToolHandlerFunc) server.Tool
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		start := time.Now()
 
+		sessionID := session.GetSessionID(request.Header)
 		argsJSON, _ := json.Marshal(request.Params.Arguments)
-		log.Printf("[%s] Request: %s", toolName, string(argsJSON))
+		log.Printf("[%s][SessionID:%s] Request: %s", toolName, sessionID, string(argsJSON))
 
 		result, err := next(ctx, request)
 
@@ -51,11 +53,11 @@ func loggingMiddleware(toolName string, next server.ToolHandlerFunc) server.Tool
 		responseText := getResultText(result)
 
 		if err != nil {
-			log.Printf("[%s] Error after %v: %v \n=============", toolName, duration, err)
+			log.Printf("[%s][SessionID:%s] Error after %v: %v \n=============", toolName, sessionID, duration, err)
 		} else if result != nil && result.IsError {
-			log.Printf("[%s] Failed after %v\nResponse: %s \n=============", toolName, duration, responseText)
+			log.Printf("[%s][SessionID:%s] Failed after %v\nResponse: %s \n=============", toolName, sessionID, duration, responseText)
 		} else {
-			log.Printf("[%s] Success after %v\nResponse: %s \n=============", toolName, duration, responseText)
+			log.Printf("[%s][SessionID:%s] Success after %v\nResponse: %s \n=============", toolName, sessionID, duration, responseText)
 		}
 
 		return result, err

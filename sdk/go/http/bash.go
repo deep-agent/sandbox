@@ -8,6 +8,14 @@ import (
 )
 
 func (c *Client) BashExec(req *model.BashExecRequest) (*model.BashExecResult, error) {
+	if req.Cwd == "" {
+		ctx, err := c.GetContext()
+		if err != nil {
+			return nil, err
+		}
+		req.Cwd = ctx.Workspace
+	}
+
 	resp, err := c.doRequest("POST", "/v1/bash/exec", req)
 	if err != nil {
 		return nil, err
