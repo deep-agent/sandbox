@@ -19,7 +19,7 @@ func (c *Client) BashExec(req *model.BashExecRequest) (*model.BashExecResult, er
 
 	cwd := req.Cwd
 	if cwd == "" {
-		cwd = c.workDir
+		cwd = c.sandboxCtx.Workspace
 	}
 
 	if req.RunInBackground {

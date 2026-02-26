@@ -69,8 +69,8 @@ func TestNewClient(t *testing.T) {
 	if client.sandboxCtx == nil {
 		t.Error("expected sandboxCtx to be initialized")
 	}
-	if client.workDir != workDir {
-		t.Errorf("expected workDir %s, got %s", workDir, client.workDir)
+	if client.sandboxCtx.Workspace != workDir {
+		t.Errorf("expected Workspace %s, got %s", workDir, client.sandboxCtx.Workspace)
 	}
 }
 

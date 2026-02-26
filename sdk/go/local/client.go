@@ -1,6 +1,8 @@
 package local
 
 import (
+	"runtime"
+
 	"github.com/deep-agent/sandbox/internal/services/bash"
 	"github.com/deep-agent/sandbox/internal/services/browser"
 	"github.com/deep-agent/sandbox/internal/services/filesystem"
@@ -15,7 +17,6 @@ type Client struct {
 	fileManager  *filesystem.Manager
 	browserCtrl  *browser.Controller
 	sandboxCtx   *model.SandboxContext
-	workDir      string
 }
 
 type Option func(*Client)
@@ -37,9 +38,11 @@ func NewClient(workDir string, opts ...Option) *Client {
 		bashExecutor: bash.NewExecutor(),
 		fileManager:  filesystem.NewManager(),
 		sandboxCtx: &model.SandboxContext{
-			HomeDir: workDir,
+			HomeDir:   workDir,
+			Workspace: workDir,
+			OS:        runtime.GOOS,
+			Arch:      runtime.GOARCH,
 		},
-		workDir: workDir,
 	}
 
 	for _, opt := range opts {
