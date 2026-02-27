@@ -43,6 +43,17 @@ RUN apt-get update && apt-get install -y \
     git \
     ripgrep \
     xz-utils \
+    lsof \
+    procps \
+    net-tools \
+    iputils-ping \
+    jq \
+    less \
+    file \
+    tree \
+    zip \
+    unzip \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
