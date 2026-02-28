@@ -4,6 +4,21 @@ BINARY_NAME=sandbox
 IMAGE_NAME=fanlv/sandbox:latest
 GO=go
 
+HTTP_PROXY ?=
+HTTPS_PROXY ?=
+NO_PROXY ?= localhost,127.0.0.1
+
+DOCKER_BUILD_ARGS :=
+ifneq ($(HTTP_PROXY),)
+	DOCKER_BUILD_ARGS += --build-arg HTTP_PROXY=$(HTTP_PROXY)
+endif
+ifneq ($(HTTPS_PROXY),)
+	DOCKER_BUILD_ARGS += --build-arg HTTPS_PROXY=$(HTTPS_PROXY)
+endif
+ifneq ($(NO_PROXY),)
+	DOCKER_BUILD_ARGS += --build-arg NO_PROXY=$(NO_PROXY)
+endif
+
 ensure-env:
 	@if [ ! -f .env ]; then \
 		echo "Creating .env from .env.example..."; \
@@ -28,7 +43,7 @@ run-mcp:
 	$(GO) run ./cmd/mcp-hub
 
 docker-build:
-	docker buildx build --platform linux/amd64,linux/arm64 -t $(IMAGE_NAME) -f docker/Dockerfile --push .
+	docker buildx build --platform linux/amd64,linux/arm64 -t $(IMAGE_NAME) -f docker/Dockerfile --push $(DOCKER_BUILD_ARGS) .
 
 docker-reload: ensure-env
 	docker compose down && docker compose up -d
