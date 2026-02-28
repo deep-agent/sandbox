@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"runtime"
 
@@ -22,9 +21,7 @@ func NewSandboxHandler(cfg *config.Config) *SandboxHandler {
 
 func (h *SandboxHandler) GetContext(ctx context.Context, c *app.RequestContext) {
 	cwd := ctxutil.GetCwd(ctx)
-	if cwd == h.cfg.Workspace {
-		cwd = fmt.Sprintf("%s/%s", h.cfg.Workspace, ctxutil.GetSessionIDFromCtx(ctx))
-	}
+
 	sandboxCtx := model.SandboxContext{
 		Workspace: cwd,
 		OS:        runtime.GOOS,
