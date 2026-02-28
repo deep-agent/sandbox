@@ -22,7 +22,7 @@ func NewSandboxHandler(cfg *config.Config) *SandboxHandler {
 
 func (h *SandboxHandler) GetContext(ctx context.Context, c *app.RequestContext) {
 	cwd := ctxutil.GetCwd(ctx)
-	if cwd == "" {
+	if cwd == h.cfg.Workspace {
 		cwd = fmt.Sprintf("%s/%s", h.cfg.Workspace, ctxutil.GetSessionIDFromCtx(ctx))
 	}
 	sandboxCtx := model.SandboxContext{
