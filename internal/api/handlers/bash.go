@@ -10,6 +10,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/deep-agent/sandbox/internal/services/bash"
+	"github.com/deep-agent/sandbox/pkg/ctxutil"
 	"github.com/deep-agent/sandbox/types/model"
 )
 
@@ -32,11 +33,7 @@ func (h *BashHandler) ExecCommand(ctx context.Context, c *app.RequestContext) {
 	}
 
 	if req.Cwd == "" {
-		c.JSON(http.StatusBadRequest, model.Response{
-			Code:    400,
-			Message: "cwd is required",
-		})
-		return
+		req.Cwd = ctxutil.GetCwd(ctx)
 	}
 
 	if req.RunInBackground {
@@ -114,11 +111,7 @@ func (h *BashHandler) ExecCommandStream(ctx context.Context, c *app.RequestConte
 	}
 
 	if req.Cwd == "" {
-		c.JSON(http.StatusBadRequest, model.Response{
-			Code:    400,
-			Message: "cwd is required",
-		})
-		return
+		req.Cwd = ctxutil.GetCwd(ctx)
 	}
 
 	if req.TimeoutMS > 0 {
