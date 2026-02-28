@@ -163,13 +163,15 @@ func (e *Executor) buildResultWithTruncate(ctx context.Context, stdoutStr, stder
 
 	var metadataLines []string
 
+	if ctx.Err() == context.DeadlineExceeded {
+		result.TimedOut = true
+		metadataLines = append(metadataLines, fmt.Sprintf("command timed out after %v", e.timeout))
+	}
+
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			result.ExitCode = exitErr.ExitCode()
-		} else if ctx.Err() == context.DeadlineExceeded {
-			result.TimedOut = true
-			metadataLines = append(metadataLines, fmt.Sprintf("command timed out after %v", e.timeout))
-		} else {
+		} else if !result.TimedOut {
 			metadataLines = append(metadataLines, fmt.Sprintf("command execution failed: %v", err))
 		}
 	}

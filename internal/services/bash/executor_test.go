@@ -296,3 +296,31 @@ func TestExecute_CombinedOutput(t *testing.T) {
 		t.Errorf("expected output to contain 'stderr', got %q", result.Output)
 	}
 }
+
+func TestExecute_TimeoutWithOutput(t *testing.T) {
+	workDir := t.TempDir()
+	executor := NewExecutor()
+	executor.SetTimeout(1 * time.Second)
+
+	ctx := context.Background()
+	result, err := executor.Execute(ctx, "for i in 1 2 3 4 5; do echo \"loop $i\"; sleep 1; done", workDir, nil)
+
+	// t.Logf("==================== Timeout Test Result ====================")
+	t.Logf("Error: %v", err)
+	// t.Logf("TimedOut: %v", result.TimedOut)
+	// t.Logf("ExitCode: %d", result.ExitCode)
+	// t.Logf("DurationMs: %d", result.DurationMs)
+	// t.Logf("Truncated: %v", result.Truncated)
+	// t.Logf("Stdout: %q", result.Stdout)
+	// t.Logf("Stderr: %q", result.Stderr)
+	// t.Logf("Metadata: %q", result.Metadata)
+	t.Logf("Output (full): %q", result.Output)
+	// t.Logf("==============================================================")
+
+	if !result.TimedOut {
+		t.Error("expected TimedOut to be true")
+	}
+	if !strings.Contains(result.Output, "timed out") {
+		t.Errorf("expected output to contain 'timed out', got %q", result.Output)
+	}
+}

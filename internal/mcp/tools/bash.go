@@ -54,7 +54,7 @@ func BashHandler(homeDir string) func(ctx context.Context, request mcp.CallToolR
 			return mcp.NewToolResultText(output), nil
 		}
 
-		timeoutMS := 60000
+		timeoutMS := 30000
 		if to := request.GetFloat("timeout_ms", 0); to > 0 {
 			timeoutMS = int(to)
 			if timeoutMS > 60000 {
