@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"runtime"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/deep-agent/sandbox/internal/config"
+	"github.com/deep-agent/sandbox/pkg/ctxutil"
 	"github.com/deep-agent/sandbox/types/model"
 )
 
@@ -19,8 +21,12 @@ func NewSandboxHandler(cfg *config.Config) *SandboxHandler {
 }
 
 func (h *SandboxHandler) GetContext(ctx context.Context, c *app.RequestContext) {
+	cwd := ctxutil.GetCwd(ctx)
+	if cwd == "" {
+		cwd = fmt.Sprintf("%s/%s", h.cfg.Workspace, ctxutil.GetSessionIDFromCtx(ctx))
+	}
 	sandboxCtx := model.SandboxContext{
-		Workspace: h.cfg.Workspace,
+		Workspace: cwd,
 		OS:        runtime.GOOS,
 		Arch:      runtime.GOARCH,
 	}

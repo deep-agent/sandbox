@@ -65,11 +65,16 @@ func WithTimeout(timeout time.Duration) Option {
 	}
 }
 
-func NewClient(baseURL, sessionID, cwd string, opts ...Option) *Client {
+func WithCwd(cwd string) Option {
+	return func(c *Client) {
+		c.cwd = cwd
+	}
+}
+
+func NewClient(baseURL, sessionID string, opts ...Option) *Client {
 	c := &Client{
 		baseURL:   baseURL,
 		sessionID: sessionID,
-		cwd:       cwd,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -104,6 +109,10 @@ func (c *Client) doRequest(method, path string, body interface{}) (*response, er
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	if c.cwd != "" {
+		req.Header.Set(consts.HeaderWorkspace, c.cwd)
+	}
+
 	if c.sessionID != "" {
 		req.Header.Set(consts.HeaderSessionID, c.sessionID)
 	}

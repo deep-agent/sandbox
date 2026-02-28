@@ -58,6 +58,7 @@ func (r *Router) Setup() {
 		MaxAge:           24 * time.Hour,
 	}))
 	r.server.Use(middleware.Logger())
+	r.server.Use(middleware.Context())
 
 	r.server.GET("/health", sandboxHandler.Health)
 	r.server.GET("/docs", swaggerHandler.SwaggerUI)
