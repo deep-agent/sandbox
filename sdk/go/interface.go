@@ -1,6 +1,6 @@
 package sandbox
 
-import "github.com/deep-agent/sandbox/model"
+import "github.com/deep-agent/sandbox/types/model"
 
 type Sandbox interface {
 	ContextProvider

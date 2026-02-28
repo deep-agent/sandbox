@@ -6,8 +6,8 @@ import (
 	"github.com/deep-agent/sandbox/internal/services/bash"
 	"github.com/deep-agent/sandbox/internal/services/browser"
 	"github.com/deep-agent/sandbox/internal/services/filesystem"
-	"github.com/deep-agent/sandbox/model"
 	sandbox "github.com/deep-agent/sandbox/sdk/go"
+	"github.com/deep-agent/sandbox/types/model"
 )
 
 var _ sandbox.Sandbox = (*Client)(nil)

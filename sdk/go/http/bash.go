@@ -4,16 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/deep-agent/sandbox/model"
+	"github.com/deep-agent/sandbox/types/model"
 )
 
 func (c *Client) BashExec(req *model.BashExecRequest) (*model.BashExecResult, error) {
 	if req.Cwd == "" {
-		ctx, err := c.GetContext()
-		if err != nil {
-			return nil, err
-		}
-		req.Cwd = ctx.Workspace
+		req.Cwd = c.cwd
 	}
 
 	resp, err := c.doRequest("POST", "/v1/bash/exec", req)

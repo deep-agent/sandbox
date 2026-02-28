@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/deep-agent/sandbox/internal/services/bash"
-	"github.com/deep-agent/sandbox/pkg/session"
+	"github.com/deep-agent/sandbox/pkg/ctxutil"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -29,14 +29,14 @@ func BashToolDef() mcp.Tool {
 	)
 }
 
-func BashHandler(rootWorkspace string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func BashHandler() func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		command, err := request.RequireString("command")
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 
-		cwd := session.GetWorkspaceFromHeader(request.Header, rootWorkspace)
+		cwd := ctxutil.GetCwd(ctx)
 
 		runInBackground := request.GetBool("run_in_background", false)
 		executor := bash.NewExecutor()

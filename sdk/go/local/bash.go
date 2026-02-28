@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/deep-agent/sandbox/internal/services/bash"
-	"github.com/deep-agent/sandbox/model"
+	"github.com/deep-agent/sandbox/types/model"
 )
 
 func (c *Client) BashExec(req *model.BashExecRequest) (*model.BashExecResult, error) {

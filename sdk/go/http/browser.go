@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/deep-agent/sandbox/model"
+	"github.com/deep-agent/sandbox/types/model"
 )
 
 func (c *Client) BrowserGetInfo() (*model.BrowserInfo, error) {

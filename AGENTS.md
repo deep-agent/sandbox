@@ -105,7 +105,9 @@ Repository map (high level)
 - `internal/api/middleware`: authentication middleware (JWT).
 - `internal/services`: business logic (filesystem, bash, browser, terminal, web).
 - `internal/mcp`: MCP tool registry and tool handlers.
-- `model`: shared API response/request structs.
+- `types/model`: shared API response/request structs.
+- `types/consts`: constants (env variables, HTTP headers).
+- `pkg/ctxutil`: context utilities (workspace path, session ID).
 - `sdk/go`: Go SDK for sandbox API.
 - `docs`: MCP tools documentation (tools.json, web_tools.json).
 - `examples/*`: separate Go modules with example clients (cdp, filesystem, web).

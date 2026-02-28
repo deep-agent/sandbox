@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/deep-agent/sandbox/internal/services/filesystem"
-	"github.com/deep-agent/sandbox/pkg/session"
+	"github.com/deep-agent/sandbox/pkg/ctxutil"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -38,7 +38,7 @@ func GrepToolDef() mcp.Tool {
 	)
 }
 
-func GrepHandler(rootWorkspace string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func GrepHandler() func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	manager := filesystem.NewManager()
 
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -49,7 +49,7 @@ func GrepHandler(rootWorkspace string) func(ctx context.Context, request mcp.Cal
 
 		searchPath := request.GetString("path", "")
 		if searchPath == "" {
-			searchPath = session.GetWorkspaceFromHeader(request.Header, rootWorkspace)
+			searchPath = ctxutil.GetCwd(ctx)
 		}
 
 		opts := filesystem.GrepOptions{

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/deep-agent/sandbox/pkg/ctxutil"
 )
 
 func TestGrepTool_Tool(t *testing.T) {
@@ -43,13 +45,14 @@ func TestGrepTool_Handler_SimpleSearch(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := GrepHandler(tmpDir)
+	handler := GrepHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern": "hello",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -76,14 +79,15 @@ func TestGrepTool_Handler_ContentMode(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := GrepHandler(tmpDir)
+	handler := GrepHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern":     "hello",
 		"output_mode": "content",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -109,14 +113,15 @@ func TestGrepTool_Handler_CountMode(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := GrepHandler(tmpDir)
+	handler := GrepHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern":     "hello",
 		"output_mode": "count",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -139,14 +144,15 @@ func TestGrepTool_Handler_CaseInsensitive(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := GrepHandler(tmpDir)
+	handler := GrepHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern":          "hello",
 		"case_insensitive": true,
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -174,14 +180,15 @@ func TestGrepTool_Handler_GlobFilter(t *testing.T) {
 		t.Fatalf("failed to create txt file: %v", err)
 	}
 
-	handler := GrepHandler(tmpDir)
+	handler := GrepHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern": "hello",
 		"glob":    "*.js",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -208,7 +215,8 @@ func TestGrepTool_Handler_ContextLines(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := GrepHandler(tmpDir)
+	handler := GrepHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern":       "target",
@@ -216,7 +224,7 @@ func TestGrepTool_Handler_ContextLines(t *testing.T) {
 		"context_lines": float64(1),
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -242,13 +250,14 @@ func TestGrepTool_Handler_NoMatches(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := GrepHandler(tmpDir)
+	handler := GrepHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern": "nonexistent",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -260,11 +269,12 @@ func TestGrepTool_Handler_NoMatches(t *testing.T) {
 }
 
 func TestGrepTool_Handler_MissingPattern(t *testing.T) {
-	handler := GrepHandler(os.TempDir())
+	handler := GrepHandler()
+	ctx := ctxutil.WithCwd(context.Background(), os.TempDir())
 
 	request := mockCallToolRequest(map[string]interface{}{})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -286,7 +296,7 @@ func TestGrepTool_Handler_CustomPath(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := GrepHandler("/some/other/path")
+	handler := GrepHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern": "custom",
@@ -316,14 +326,15 @@ func TestGrepTool_Handler_RegexPattern(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := GrepHandler(tmpDir)
+	handler := GrepHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern":     "function .+",
 		"output_mode": "content",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -336,3 +347,4 @@ func TestGrepTool_Handler_RegexPattern(t *testing.T) {
 		t.Errorf("expected output to contain 'function hello', got: %s", output)
 	}
 }
+

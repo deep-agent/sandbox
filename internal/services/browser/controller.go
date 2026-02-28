@@ -10,7 +10,7 @@ import (
 
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
-	"github.com/deep-agent/sandbox/model"
+	"github.com/deep-agent/sandbox/types/model"
 )
 
 type Controller struct {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/deep-agent/sandbox/internal/services/browser"
-	"github.com/deep-agent/sandbox/model"
+	"github.com/deep-agent/sandbox/types/model"
 )
 
 func (c *Client) ensureBrowser() error {

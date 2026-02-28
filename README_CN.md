@@ -76,8 +76,11 @@ sandbox/
 │   │   ├── server.go             # MCP 协议服务
 │   │   └── tools/                # MCP Tools 实现
 │   └── config/config.go
-├── model/                        # 共享数据模型 (bash, browser, file, grep, web, response)
+├── types/
+│   ├── consts/                   # 常量定义 (env, headers)
+│   └── model/                    # 共享数据模型 (bash, browser, file, grep, web, response)
 ├── pkg/
+│   ├── ctxutil/                  # Context 工具 (工作目录、会话)
 │   └── safe/                     # 安全工具函数
 ├── docker/
 │   ├── Dockerfile
@@ -240,7 +243,7 @@ package main
 import (
     "fmt"
     sandbox "github.com/deep-agent/sandbox/sdk/go"
-    "github.com/deep-agent/sandbox/model"
+    "github.com/deep-agent/sandbox/types/model"
 )
 
 func main() {

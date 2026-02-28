@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/deep-agent/sandbox/model"
+	"github.com/deep-agent/sandbox/types/model"
 )
 
 func getTestCDPURL() string {
@@ -35,15 +35,23 @@ func getActualWSURL(cdpURL string) (string, error) {
 	httpURL := fmt.Sprintf("%s://%s%s/json/version", scheme, parsedURL.Host, parsedURL.Path)
 	resp, err := http.Get(httpURL)
 	if err != nil {
-		return cdpURL, nil
+		return "", fmt.Errorf("failed to connect to CDP: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("CDP returned non-OK status: %d", resp.StatusCode)
+	}
 
 	var result struct {
 		WebSocketDebuggerUrl string `json:"webSocketDebuggerUrl"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return cdpURL, nil
+		return "", fmt.Errorf("failed to parse CDP response: %w", err)
+	}
+
+	if result.WebSocketDebuggerUrl == "" {
+		return "", fmt.Errorf("CDP response missing WebSocketDebuggerUrl")
 	}
 
 	wsURL := result.WebSocketDebuggerUrl

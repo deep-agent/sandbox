@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/deep-agent/sandbox/pkg/session"
+	"github.com/deep-agent/sandbox/types/consts"
 )
 
 func Logger() app.HandlerFunc {
@@ -16,7 +16,7 @@ func Logger() app.HandlerFunc {
 		method := string(c.Request.Method())
 		query := string(c.Request.URI().QueryString())
 		body := c.Request.Body()
-		sessionID := session.GetSessionIDFromHertz(&c.Request.Header)
+		sessionID := string(c.Request.Header.Peek(consts.HeaderSessionID))
 
 		log.Printf("[REQ][SessionID:%s] %s %s query=%s body=%s", sessionID, method, path, query, truncate(string(body), 1024))
 

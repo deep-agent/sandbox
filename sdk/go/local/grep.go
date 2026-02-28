@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/deep-agent/sandbox/internal/services/filesystem"
-	"github.com/deep-agent/sandbox/model"
+	"github.com/deep-agent/sandbox/types/model"
 )
 
 func (c *Client) GrepSearch(req *model.GrepRequest) (*model.GrepResult, error) {

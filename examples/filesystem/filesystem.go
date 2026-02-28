@@ -15,6 +15,7 @@ import (
 	"github.com/cloudwego/eino/flow/agent/react"
 	"github.com/cloudwego/eino/schema"
 	"github.com/mark3labs/mcp-go/client"
+	"github.com/mark3labs/mcp-go/client/transport"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -110,7 +111,7 @@ func main() {
 					fmt.Printf("\n[Tool Call: %s]\n", tc.Function.Name)
 				}
 				if tc.Function.Arguments != "" {
-					fmt.Printf("[Arguments: %s]\n", tc.Function.Arguments)
+					fmt.Printf("%s", tc.Function.Arguments)
 				}
 			}
 		}
@@ -127,7 +128,11 @@ func getMCPTools(ctx context.Context) []tool.BaseTool {
 
 	fmt.Printf("Connecting to MCP server: %s\n", mcpURL)
 
-	cli, err := client.NewStreamableHttpClient(mcpURL)
+	cli, err := client.NewStreamableHttpClient(mcpURL,
+		transport.WithHTTPHeaders(map[string]string{
+			"X-Session-ID": "123",
+			"X-Workspace":  "/tmp",
+		}))
 	if err != nil {
 		log.Fatalf("Failed to create MCP client: %v", err)
 	}

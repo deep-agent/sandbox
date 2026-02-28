@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/deep-agent/sandbox/pkg/ctxutil"
 )
 
 func TestBashTool_Tool(t *testing.T) {
@@ -38,13 +40,14 @@ func TestBashTool_Tool(t *testing.T) {
 }
 
 func TestBashTool_Handler_SimpleCommand(t *testing.T) {
-	handler := BashHandler(os.TempDir())
+	handler := BashHandler()
+	ctx := ctxutil.WithCwd(context.Background(), os.TempDir())
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"command": "echo hello",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -60,13 +63,14 @@ func TestBashTool_Handler_SimpleCommand(t *testing.T) {
 }
 
 func TestBashTool_Handler_CommandWithExitCode(t *testing.T) {
-	handler := BashHandler(os.TempDir())
+	handler := BashHandler()
+	ctx := ctxutil.WithCwd(context.Background(), os.TempDir())
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"command": "exit 1",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -77,11 +81,12 @@ func TestBashTool_Handler_CommandWithExitCode(t *testing.T) {
 }
 
 func TestBashTool_Handler_MissingCommand(t *testing.T) {
-	handler := BashHandler(os.TempDir())
+	handler := BashHandler()
+	ctx := ctxutil.WithCwd(context.Background(), os.TempDir())
 
 	request := mockCallToolRequest(map[string]interface{}{})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -92,7 +97,8 @@ func TestBashTool_Handler_MissingCommand(t *testing.T) {
 }
 
 func TestBashTool_Handler_Timeout(t *testing.T) {
-	handler := BashHandler(os.TempDir())
+	handler := BashHandler()
+	ctx := ctxutil.WithCwd(context.Background(), os.TempDir())
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"command":    "sleep 5",
@@ -100,7 +106,7 @@ func TestBashTool_Handler_Timeout(t *testing.T) {
 	})
 
 	start := time.Now()
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	duration := time.Since(start)
 
 	if err != nil {
@@ -117,27 +123,29 @@ func TestBashTool_Handler_Timeout(t *testing.T) {
 }
 
 func TestBashTool_Handler_TimeoutMax(t *testing.T) {
-	handler := BashHandler(os.TempDir())
+	handler := BashHandler()
+	ctx := ctxutil.WithCwd(context.Background(), os.TempDir())
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"command":    "echo test",
 		"timeout_ms": float64(999999999),
 	})
 
-	_, err := handler(context.Background(), request)
+	_, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
 func TestBashTool_Handler_OutputTruncation(t *testing.T) {
-	handler := BashHandler(os.TempDir())
+	handler := BashHandler()
+	ctx := ctxutil.WithCwd(context.Background(), os.TempDir())
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"command": "yes | head -n 50000",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -150,13 +158,14 @@ func TestBashTool_Handler_OutputTruncation(t *testing.T) {
 
 func TestBashTool_Handler_WorkingDirectory(t *testing.T) {
 	tmpDir := os.TempDir()
-	handler := BashHandler(tmpDir)
+	handler := BashHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"command": "pwd",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -168,13 +177,14 @@ func TestBashTool_Handler_WorkingDirectory(t *testing.T) {
 }
 
 func TestBashTool_Handler_EnvironmentVariables(t *testing.T) {
-	handler := BashHandler(os.TempDir())
+	handler := BashHandler()
+	ctx := ctxutil.WithCwd(context.Background(), os.TempDir())
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"command": "echo $HOME",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -185,13 +195,14 @@ func TestBashTool_Handler_EnvironmentVariables(t *testing.T) {
 }
 
 func TestBashTool_Handler_PipedCommand(t *testing.T) {
-	handler := BashHandler(os.TempDir())
+	handler := BashHandler()
+	ctx := ctxutil.WithCwd(context.Background(), os.TempDir())
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"command": "echo 'hello world' | wc -w",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

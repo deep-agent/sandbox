@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/deep-agent/sandbox/internal/services/filesystem"
-	"github.com/deep-agent/sandbox/pkg/session"
+	"github.com/deep-agent/sandbox/pkg/ctxutil"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -24,7 +24,7 @@ func GlobToolDef() mcp.Tool {
 	)
 }
 
-func GlobHandler(rootWorkspace string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func GlobHandler() func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		pattern, err := request.RequireString("pattern")
 		if err != nil {
@@ -33,7 +33,7 @@ func GlobHandler(rootWorkspace string) func(ctx context.Context, request mcp.Cal
 
 		searchPath := request.GetString("path", "")
 		if searchPath == "" {
-			searchPath = session.GetWorkspaceFromHeader(request.Header, rootWorkspace)
+			searchPath = ctxutil.GetCwd(ctx)
 		}
 
 		fileManager := filesystem.NewManager()

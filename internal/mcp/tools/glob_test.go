@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/deep-agent/sandbox/pkg/ctxutil"
 )
 
 func TestGlobTool_Tool(t *testing.T) {
@@ -45,13 +47,14 @@ func TestGlobTool_Handler_SimplePattern(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := GlobHandler(tmpDir)
+	handler := GlobHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern": "*.txt",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -83,13 +86,14 @@ func TestGlobTool_Handler_DoubleStarPattern(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := GlobHandler(tmpDir)
+	handler := GlobHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern": "**/*.tsx",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -116,7 +120,7 @@ func TestGlobTool_Handler_CustomPath(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	handler := GlobHandler("/some/other/path")
+	handler := GlobHandler()
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern": "*.js",
@@ -145,13 +149,14 @@ func TestGlobTool_Handler_NoMatches(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	handler := GlobHandler(tmpDir)
+	handler := GlobHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern": "*.nonexistent",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -167,11 +172,12 @@ func TestGlobTool_Handler_NoMatches(t *testing.T) {
 }
 
 func TestGlobTool_Handler_MissingPattern(t *testing.T) {
-	handler := GlobHandler(os.TempDir())
+	handler := GlobHandler()
+	ctx := ctxutil.WithCwd(context.Background(), os.TempDir())
 
 	request := mockCallToolRequest(map[string]interface{}{})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -202,13 +208,14 @@ func TestGlobTool_Handler_SortByModTime(t *testing.T) {
 		t.Fatalf("failed to create new file: %v", err)
 	}
 
-	handler := GlobHandler(tmpDir)
+	handler := GlobHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern": "*.txt",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -247,13 +254,14 @@ func TestGlobTool_Handler_PrefixPattern(t *testing.T) {
 		t.Fatalf("failed to create other file: %v", err)
 	}
 
-	handler := GlobHandler(tmpDir)
+	handler := GlobHandler()
+	ctx := ctxutil.WithCwd(context.Background(), tmpDir)
 
 	request := mockCallToolRequest(map[string]interface{}{
 		"pattern": "src/**/*.ts",
 	})
 
-	result, err := handler(context.Background(), request)
+	result, err := handler(ctx, request)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

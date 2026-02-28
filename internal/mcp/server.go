@@ -8,42 +8,78 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/deep-agent/sandbox/pkg/session"
+	"github.com/deep-agent/sandbox/pkg/ctxutil"
+	"github.com/deep-agent/sandbox/types/consts"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
 
 type ToolHandlerFunc = server.ToolHandlerFunc
 
+type Middleware func(server.ToolHandlerFunc) server.ToolHandlerFunc
+
 type Server struct {
-	mcpServer  *server.MCPServer
-	httpServer *server.StreamableHTTPServer
-	port       int
+	mcpServer   *server.MCPServer
+	httpServer  *server.StreamableHTTPServer
+	port        int
+	middlewares []Middleware
 }
 
 func NewServer(name, version string, port int) *Server {
-	s := server.NewMCPServer(
+	mcpServer := server.NewMCPServer(
 		name,
 		version,
 		server.WithToolCapabilities(true),
 	)
 
-	return &Server{
-		mcpServer: s,
+	s := &Server{
+		mcpServer: mcpServer,
 		port:      port,
 	}
+
+	s.Use(loggingMiddleware)
+	s.Use(contextMiddleware)
+
+	return s
+}
+
+func (s *Server) Use(middleware Middleware) {
+	s.middlewares = append(s.middlewares, middleware)
 }
 
 func (s *Server) AddTool(tool mcp.Tool, handler server.ToolHandlerFunc) {
-	wrappedHandler := loggingMiddleware(tool.Name, handler)
-	s.mcpServer.AddTool(tool, wrappedHandler)
+	wrapped := s.wrapHandler(handler)
+	s.mcpServer.AddTool(tool, wrapped)
 }
 
-func loggingMiddleware(toolName string, next server.ToolHandlerFunc) server.ToolHandlerFunc {
+func (s *Server) wrapHandler(handler server.ToolHandlerFunc) server.ToolHandlerFunc {
+	for i := len(s.middlewares) - 1; i >= 0; i-- {
+		handler = s.middlewares[i](handler)
+	}
+	return handler
+}
+
+func contextMiddleware(next server.ToolHandlerFunc) server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		sessionID := request.Header.Get(consts.HeaderSessionID)
+		cwd := request.Header.Get(consts.HeaderWorkspace)
+		log.Printf("[contextMiddleware] sessionID=%s, cwd=%s", sessionID, cwd)
+		if sessionID != "" {
+			ctx = ctxutil.WithSessionID(ctx, sessionID)
+		}
+		if cwd != "" {
+			ctx = ctxutil.WithCwd(ctx, cwd)
+		}
+		return next(ctx, request)
+	}
+}
+
+func loggingMiddleware(next server.ToolHandlerFunc) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		start := time.Now()
 
-		sessionID := session.GetSessionID(request.Header)
+		toolName := request.Params.Name
+		sessionID := ctxutil.GetSessionIDFromCtx(ctx)
 		argsJSON, _ := json.Marshal(request.Params.Arguments)
 		log.Printf("[%s][SessionID:%s] Request: %s", toolName, sessionID, string(argsJSON))
 

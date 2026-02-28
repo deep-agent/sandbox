@@ -6,7 +6,7 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/deep-agent/sandbox/internal/services/filesystem"
-	"github.com/deep-agent/sandbox/model"
+	"github.com/deep-agent/sandbox/types/model"
 )
 
 type FileHandler struct {

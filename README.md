@@ -37,8 +37,11 @@ sandbox/
 │   │   ├── server.go             # MCP protocol server
 │   │   └── tools/                # MCP Tools implementation
 │   └── config/config.go
-├── model/                        # Shared data models (bash, browser, file, grep, web, response)
+├── types/
+│   ├── consts/                   # Constants (env, headers)
+│   └── model/                    # Shared data models (bash, browser, file, grep, web, response)
 ├── pkg/
+│   ├── ctxutil/                  # Context utilities (workspace path, session)
 │   └── safe/                     # Safety utility functions
 ├── docker/
 │   ├── Dockerfile
@@ -200,7 +203,7 @@ package main
 import (
     "fmt"
     sandbox "github.com/deep-agent/sandbox/sdk/go"
-    "github.com/deep-agent/sandbox/model"
+    "github.com/deep-agent/sandbox/types/model"
 )
 
 func main() {
