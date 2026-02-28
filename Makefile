@@ -9,14 +9,18 @@ HTTPS_PROXY ?=
 NO_PROXY ?= localhost,127.0.0.1
 
 DOCKER_BUILD_ARGS :=
+DOCKER_ENV :=
 ifneq ($(HTTP_PROXY),)
 	DOCKER_BUILD_ARGS += --build-arg HTTP_PROXY=$(HTTP_PROXY)
+	DOCKER_ENV += HTTP_PROXY=$(HTTP_PROXY)
 endif
 ifneq ($(HTTPS_PROXY),)
 	DOCKER_BUILD_ARGS += --build-arg HTTPS_PROXY=$(HTTPS_PROXY)
+	DOCKER_ENV += HTTPS_PROXY=$(HTTPS_PROXY)
 endif
 ifneq ($(NO_PROXY),)
 	DOCKER_BUILD_ARGS += --build-arg NO_PROXY=$(NO_PROXY)
+	DOCKER_ENV += NO_PROXY=$(NO_PROXY)
 endif
 
 ensure-env:
@@ -46,10 +50,10 @@ docker-build:
 	docker buildx build --platform linux/amd64,linux/arm64 -t $(IMAGE_NAME) -f docker/Dockerfile --push $(DOCKER_BUILD_ARGS) .
 
 docker-reload: ensure-env
-	docker compose down && docker compose up -d
+	$(DOCKER_ENV) docker compose down && $(DOCKER_ENV) docker compose up -d
 
 docker-rebuild: ensure-env
-	docker compose up --build --force-recreate -d
+	$(DOCKER_ENV) docker compose up --build --force-recreate -d
 
 
 nginx-reload:
