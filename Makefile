@@ -25,10 +25,10 @@ docker-build:
 	docker buildx build --platform linux/amd64,linux/arm64 -t $(IMAGE_NAME) -f docker/Dockerfile --push .
 
 docker-reload:
-	docker-compose down && docker-compose up -d
+	docker compose down && docker compose up -d
 
 docker-rebuild:
-	docker-compose up --build --force-recreate -d
+	docker compose up --build --force-recreate -d
 
 
 nginx-reload:
