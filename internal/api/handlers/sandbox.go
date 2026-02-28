@@ -22,8 +22,7 @@ func NewSandboxHandler(cfg *config.Config) *SandboxHandler {
 func (h *SandboxHandler) GetContext(ctx context.Context, c *app.RequestContext) {
 	sessionID := session.GetSessionIDFromHertz(&c.Request.Header)
 	sandboxCtx := model.SandboxContext{
-		HomeDir:   h.cfg.HomeDir,
-		Workspace: session.GetWorkspace(h.cfg.HomeDir, sessionID),
+		Workspace: session.GetSessionWorkspace(h.cfg.Workspace, sessionID),
 		OS:        runtime.GOOS,
 		Arch:      runtime.GOARCH,
 	}

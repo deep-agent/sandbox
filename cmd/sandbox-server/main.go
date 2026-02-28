@@ -11,7 +11,7 @@ func main() {
 	cfg := config.Load()
 
 	log.Printf("Starting Sandbox Server on port %d", cfg.SandboxServerPort)
-	log.Printf("HomeDir: %s", cfg.HomeDir)
+	log.Printf("Workspace: %s", cfg.Workspace)
 	log.Printf("Browser CDP Port: %d", cfg.BrowserCDPPort)
 
 	router := api.NewRouter(cfg)

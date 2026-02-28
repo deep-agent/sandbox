@@ -24,7 +24,7 @@ func GlobToolDef() mcp.Tool {
 	)
 }
 
-func GlobHandler(homeDir string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func GlobHandler(rootWorkspace string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		pattern, err := request.RequireString("pattern")
 		if err != nil {
@@ -33,7 +33,7 @@ func GlobHandler(homeDir string) func(ctx context.Context, request mcp.CallToolR
 
 		searchPath := request.GetString("path", "")
 		if searchPath == "" {
-			searchPath = session.GetWorkspaceFromHeader(request.Header, homeDir)
+			searchPath = session.GetWorkspaceFromHeader(request.Header, rootWorkspace)
 		}
 
 		fileManager := filesystem.NewManager()

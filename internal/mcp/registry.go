@@ -7,8 +7,8 @@ import (
 )
 
 type ToolConfig struct {
-	HomeDir string
-	CDPURL  string
+	Workspace string
+	CDPURL    string
 }
 
 type Registry struct {
@@ -22,10 +22,10 @@ func NewRegistry(cfg ToolConfig) *Registry {
 }
 
 func (r *Registry) RegisterAll(addTool func(tool mcp.Tool, handler server.ToolHandlerFunc)) {
-	addTool(tools.BashToolDef(), tools.BashHandler(r.config.HomeDir))
+	addTool(tools.BashToolDef(), tools.BashHandler(r.config.Workspace))
 
-	addTool(tools.GlobToolDef(), tools.GlobHandler(r.config.HomeDir))
-	addTool(tools.GrepToolDef(), tools.GrepHandler(r.config.HomeDir))
+	addTool(tools.GlobToolDef(), tools.GlobHandler(r.config.Workspace))
+	addTool(tools.GrepToolDef(), tools.GrepHandler(r.config.Workspace))
 	addTool(tools.ReadToolDef(), tools.ReadHandler())
 	addTool(tools.WriteToolDef(), tools.WriteHandler())
 	addTool(tools.EditToolDef(), tools.EditHandler())

@@ -86,9 +86,9 @@ func TestNewClientWithBrowserCDP(t *testing.T) {
 func TestNewClientWithSandboxContext(t *testing.T) {
 	workDir := t.TempDir()
 	ctx := &model.SandboxContext{
-		HomeDir: "/home/test",
-		OS:      "linux",
-		Arch:    "amd64",
+		Workspace: "/home/test",
+		OS:        "linux",
+		Arch:      "amd64",
 	}
 
 	client := NewClient(workDir, WithSandboxContext(ctx))
@@ -107,8 +107,8 @@ func TestGetContext(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if ctx.HomeDir != workDir {
-		t.Errorf("expected HomeDir %s, got %s", workDir, ctx.HomeDir)
+	if ctx.Workspace != workDir {
+		t.Errorf("expected Workspace %s, got %s", workDir, ctx.Workspace)
 	}
 }
 

@@ -19,13 +19,13 @@ func GetSessionIDFromHertz(header HertzHeader) string {
 	return string(header.Peek(HeaderSessionID))
 }
 
-func GetWorkspace(homeDir, sessionID string) string {
+func GetSessionWorkspace(rootWorkspace, sessionID string) string {
 	if sessionID == "" {
-		return homeDir
+		return rootWorkspace
 	}
-	return filepath.Join(homeDir, sessionID)
+	return filepath.Join(rootWorkspace, sessionID)
 }
 
-func GetWorkspaceFromHeader(header http.Header, homeDir string) string {
-	return GetWorkspace(homeDir, GetSessionID(header))
+func GetWorkspaceFromHeader(header http.Header, rootWorkspace string) string {
+	return GetSessionWorkspace(rootWorkspace, GetSessionID(header))
 }

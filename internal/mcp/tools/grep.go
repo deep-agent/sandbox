@@ -38,7 +38,7 @@ func GrepToolDef() mcp.Tool {
 	)
 }
 
-func GrepHandler(homeDir string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func GrepHandler(rootWorkspace string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	manager := filesystem.NewManager()
 
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -49,7 +49,7 @@ func GrepHandler(homeDir string) func(ctx context.Context, request mcp.CallToolR
 
 		searchPath := request.GetString("path", "")
 		if searchPath == "" {
-			searchPath = session.GetWorkspaceFromHeader(request.Header, homeDir)
+			searchPath = session.GetWorkspaceFromHeader(request.Header, rootWorkspace)
 		}
 
 		opts := filesystem.GrepOptions{

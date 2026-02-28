@@ -15,8 +15,8 @@ func main() {
 	server := mcp.NewServer("sandbox-mcp", "1.0.0", cfg.MCPHubPort)
 
 	registry := mcp.NewRegistry(mcp.ToolConfig{
-		HomeDir: cfg.HomeDir,
-		CDPURL:  fmt.Sprintf("ws://localhost:%d", cfg.BrowserCDPPort),
+		Workspace: cfg.Workspace,
+		CDPURL:    fmt.Sprintf("ws://localhost:%d", cfg.BrowserCDPPort),
 	})
 	registry.RegisterAll(server.AddTool)
 

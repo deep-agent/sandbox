@@ -89,9 +89,9 @@ func TestGetContext(t *testing.T) {
 		resp := map[string]interface{}{
 			"code": 0,
 			"data": map[string]interface{}{
-				"home_dir": "/home/sandbox",
-				"os":       "linux",
-				"arch":     "amd64",
+				"workspace": "/home/sandbox/workspace",
+				"os":        "linux",
+				"arch":      "amd64",
 			},
 		}
 		json.NewEncoder(w).Encode(resp)
@@ -104,8 +104,8 @@ func TestGetContext(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if ctx.HomeDir != "/home/sandbox" {
-		t.Errorf("expected HomeDir /home/sandbox, got %s", ctx.HomeDir)
+	if ctx.Workspace != "/home/sandbox/workspace" {
+		t.Errorf("expected Workspace /home/sandbox/workspace, got %s", ctx.Workspace)
 	}
 	if ctx.OS != "linux" {
 		t.Errorf("expected OS linux, got %s", ctx.OS)

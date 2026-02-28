@@ -29,7 +29,7 @@ func NewRouter(cfg *config.Config) *Router {
 	return &Router{
 		server:          h,
 		cfg:             cfg,
-		terminalHandler: handlers.NewTerminalHandler(cfg.HomeDir),
+		terminalHandler: handlers.NewTerminalHandler(cfg.Workspace),
 	}
 }
 

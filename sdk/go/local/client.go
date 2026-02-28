@@ -38,7 +38,6 @@ func NewClient(workDir string, opts ...Option) *Client {
 		bashExecutor: bash.NewExecutor(),
 		fileManager:  filesystem.NewManager(),
 		sandboxCtx: &model.SandboxContext{
-			HomeDir:   workDir,
 			Workspace: workDir,
 			OS:        runtime.GOOS,
 			Arch:      runtime.GOARCH,
