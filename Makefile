@@ -1,8 +1,14 @@
-.PHONY: build build-linux clean run docker-build docker-run test
+.PHONY: build build-linux clean run docker-build docker-run test ensure-env
 
 BINARY_NAME=sandbox
 IMAGE_NAME=fanlv/sandbox:latest
 GO=go
+
+ensure-env:
+	@if [ ! -f .env ]; then \
+		echo "Creating .env from .env.example..."; \
+		cp .env.example .env; \
+	fi
 
 build:
 	$(GO) build -o bin/sandbox-server ./cmd/sandbox-server
@@ -24,10 +30,10 @@ run-mcp:
 docker-build:
 	docker buildx build --platform linux/amd64,linux/arm64 -t $(IMAGE_NAME) -f docker/Dockerfile --push .
 
-docker-reload:
+docker-reload: ensure-env
 	docker compose down && docker compose up -d
 
-docker-rebuild:
+docker-rebuild: ensure-env
 	docker compose up --build --force-recreate -d
 
 
