@@ -10,6 +10,7 @@ import (
 
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
+	"github.com/deep-agent/sandbox/types/consts"
 	"github.com/deep-agent/sandbox/types/model"
 )
 
@@ -34,7 +35,7 @@ type PageInfo struct {
 func NewController(cdpURL string) *Controller {
 	return &Controller{
 		cdpURL:  cdpURL,
-		timeout: 30 * time.Second,
+		timeout: consts.DefaultBrowserTimeout,
 	}
 }
 
@@ -57,10 +58,15 @@ func (c *Controller) GetInfo() (*model.BrowserInfo, error) {
 }
 
 func (c *Controller) createContext() (context.Context, context.CancelFunc) {
-	allocCtx, _ := chromedp.NewRemoteAllocator(context.Background(), c.cdpURL)
-	ctx, _ := chromedp.NewContext(allocCtx)
-	ctx, cancel := context.WithTimeout(ctx, c.timeout)
-	return ctx, cancel
+	allocCtx, allocCancel := chromedp.NewRemoteAllocator(context.Background(), c.cdpURL)
+	ctx, ctxCancel := chromedp.NewContext(allocCtx)
+	ctx, timeoutCancel := context.WithTimeout(ctx, c.timeout)
+
+	return ctx, func() {
+		timeoutCancel()
+		ctxCancel()
+		allocCancel()
+	}
 }
 
 func (c *Controller) Navigate(url string) error {

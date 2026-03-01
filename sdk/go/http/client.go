@@ -158,3 +158,31 @@ func (c *Client) GetContext() (*model.SandboxContext, error) {
 
 	return &ctx, nil
 }
+
+func (c *Client) WebFetch(req *model.WebFetchRequest) (*model.WebFetchResult, error) {
+	resp, err := c.doRequest("POST", "/v1/web/fetch", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var result model.WebFetchResult
+	if err := json.Unmarshal(resp.Data, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal web fetch result: %w", err)
+	}
+
+	return &result, nil
+}
+
+func (c *Client) WebSearch(req *model.WebSearchRequest) (*model.WebSearchResult, error) {
+	resp, err := c.doRequest("POST", "/v1/web/search", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var result model.WebSearchResult
+	if err := json.Unmarshal(resp.Data, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal web search result: %w", err)
+	}
+
+	return &result, nil
+}

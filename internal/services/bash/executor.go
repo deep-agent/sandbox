@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/deep-agent/sandbox/pkg/safe"
+	"github.com/deep-agent/sandbox/types/consts"
 )
 
 type TruncateOptions struct {
@@ -46,7 +47,7 @@ type ExecResult struct {
 
 func NewExecutor() *Executor {
 	return &Executor{
-		timeout: 30 * time.Second,
+		timeout: consts.DefaultBashTimeout,
 	}
 }
 

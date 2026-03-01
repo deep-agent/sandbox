@@ -25,6 +25,8 @@ func GlobToolDef() mcp.Tool {
 }
 
 func GlobHandler() func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	fileManager := filesystem.NewManager()
+
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		pattern, err := request.RequireString("pattern")
 		if err != nil {
@@ -36,7 +38,6 @@ func GlobHandler() func(ctx context.Context, request mcp.CallToolRequest) (*mcp.
 			searchPath = ctxutil.GetCwd(ctx)
 		}
 
-		fileManager := filesystem.NewManager()
 		result, err := fileManager.Glob(filesystem.GlobOptions{
 			Path:    searchPath,
 			Pattern: pattern,

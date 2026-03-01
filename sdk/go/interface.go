@@ -8,6 +8,7 @@ type Sandbox interface {
 	FileManager
 	GrepSearcher
 	BrowserController
+	WebClient
 }
 
 type ContextProvider interface {
@@ -47,4 +48,9 @@ type BrowserController interface {
 	BrowserGetTitle() (*model.BrowserTitleResult, error)
 	BrowserGetPageInfo() (*model.BrowserPageInfo, error)
 	BrowserPDF() (*model.BrowserPDFResult, error)
+}
+
+type WebClient interface {
+	WebFetch(req *model.WebFetchRequest) (*model.WebFetchResult, error)
+	WebSearch(req *model.WebSearchRequest) (*model.WebSearchResult, error)
 }

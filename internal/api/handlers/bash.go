@@ -14,12 +14,10 @@ import (
 	"github.com/deep-agent/sandbox/types/model"
 )
 
-type BashHandler struct {
-	executor *bash.Executor
-}
+type BashHandler struct{}
 
-func NewBashHandler(executor *bash.Executor) *BashHandler {
-	return &BashHandler{executor: executor}
+func NewBashHandler() *BashHandler {
+	return &BashHandler{}
 }
 
 func (h *BashHandler) ExecCommand(ctx context.Context, c *app.RequestContext) {
@@ -36,12 +34,14 @@ func (h *BashHandler) ExecCommand(ctx context.Context, c *app.RequestContext) {
 		req.Cwd = ctxutil.GetCwd(ctx)
 	}
 
+	executor := bash.NewExecutor()
+
 	if req.RunInBackground {
 		timeout := 10 * time.Minute
 		if req.TimeoutMS > 0 {
 			timeout = time.Duration(req.TimeoutMS) * time.Millisecond
 		}
-		result, err := h.executor.ExecuteBackground(ctx, req.Command, req.Cwd, timeout)
+		result, err := executor.ExecuteBackground(ctx, req.Command, req.Cwd, timeout)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, model.Response{
 				Code:    500,
@@ -61,10 +61,10 @@ func (h *BashHandler) ExecCommand(ctx context.Context, c *app.RequestContext) {
 	}
 
 	if req.TimeoutMS > 0 {
-		h.executor.SetTimeout(time.Duration(req.TimeoutMS) * time.Millisecond)
+		executor.SetTimeout(time.Duration(req.TimeoutMS) * time.Millisecond)
 	}
 
-	result, err := h.executor.Execute(ctx, req.Command, req.Cwd, nil)
+	result, err := executor.Execute(ctx, req.Command, req.Cwd, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.Response{
 			Code:    500,
@@ -114,8 +114,9 @@ func (h *BashHandler) ExecCommandStream(ctx context.Context, c *app.RequestConte
 		req.Cwd = ctxutil.GetCwd(ctx)
 	}
 
+	executor := bash.NewExecutor()
 	if req.TimeoutMS > 0 {
-		h.executor.SetTimeout(time.Duration(req.TimeoutMS) * time.Millisecond)
+		executor.SetTimeout(time.Duration(req.TimeoutMS) * time.Millisecond)
 	}
 
 	c.SetStatusCode(consts.StatusOK)
@@ -137,7 +138,7 @@ func (h *BashHandler) ExecCommandStream(ctx context.Context, c *app.RequestConte
 		})
 	}
 
-	result, err := h.executor.ExecuteStream(ctx, req.Command, req.Cwd, onChunk, nil)
+	result, err := executor.ExecuteStream(ctx, req.Command, req.Cwd, onChunk, nil)
 
 	if err != nil {
 		sendEvent("error", map[string]string{"message": err.Error()})

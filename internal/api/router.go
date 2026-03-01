@@ -9,7 +9,6 @@ import (
 	"github.com/deep-agent/sandbox/internal/api/handlers"
 	"github.com/deep-agent/sandbox/internal/api/middleware"
 	"github.com/deep-agent/sandbox/internal/config"
-	"github.com/deep-agent/sandbox/internal/services/bash"
 	"github.com/deep-agent/sandbox/internal/services/browser"
 	"github.com/deep-agent/sandbox/internal/services/filesystem"
 	"github.com/deep-agent/sandbox/internal/services/web"
@@ -34,14 +33,13 @@ func NewRouter(cfg *config.Config) *Router {
 }
 
 func (r *Router) Setup() {
-	bashExecutor := bash.NewExecutor()
 	fileManager := filesystem.NewManager()
 	browserController := browser.NewController(fmt.Sprintf("ws://localhost:%d", r.cfg.BrowserCDPPort))
 	webFetcher := web.NewFetcher()
 	webSearcher := web.NewSearcher()
 
 	sandboxHandler := handlers.NewSandboxHandler(r.cfg)
-	bashHandler := handlers.NewBashHandler(bashExecutor)
+	bashHandler := handlers.NewBashHandler()
 	fileHandler := handlers.NewFileHandler(fileManager)
 	grepHandler := handlers.NewGrepHandler(fileManager)
 	browserHandler := handlers.NewBrowserHandler(browserController)

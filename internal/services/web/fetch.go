@@ -18,17 +18,27 @@ type FetchResult struct {
 	RedirectURL string
 }
 
+const (
+	DefaultCacheTTL      = 15 * time.Minute
+	DefaultMaxCacheSize  = 100
+	DefaultMaxCacheBytes = 50 * 1024 * 1024
+)
+
 type cacheEntry struct {
 	content   string
 	timestamp time.Time
+	size      int
 }
 
 type Fetcher struct {
-	client    *http.Client
-	converter *md.Converter
-	cache     map[string]cacheEntry
-	cacheMu   sync.RWMutex
-	cacheTTL  time.Duration
+	client        *http.Client
+	converter     *md.Converter
+	cache         map[string]cacheEntry
+	cacheMu       sync.RWMutex
+	cacheTTL      time.Duration
+	maxCacheSize  int
+	maxCacheBytes int
+	currentBytes  int
 }
 
 func NewFetcher() *Fetcher {
@@ -42,9 +52,11 @@ func NewFetcher() *Fetcher {
 				return nil
 			},
 		},
-		converter: md.NewConverter("", true, nil),
-		cache:     make(map[string]cacheEntry),
-		cacheTTL:  15 * time.Minute,
+		converter:     md.NewConverter("", true, nil),
+		cache:         make(map[string]cacheEntry),
+		cacheTTL:      DefaultCacheTTL,
+		maxCacheSize:  DefaultMaxCacheSize,
+		maxCacheBytes: DefaultMaxCacheBytes,
 	}
 }
 

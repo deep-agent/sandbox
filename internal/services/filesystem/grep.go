@@ -9,7 +9,21 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 )
+
+var (
+	ripgrepAvailable     bool
+	ripgrepCheckOnce     sync.Once
+	ripgrepNotFoundError = fmt.Errorf("ripgrep (rg) is not installed or not in PATH. Please install it: https://github.com/BurntSushi/ripgrep#installation")
+)
+
+func checkRipgrep() {
+	ripgrepCheckOnce.Do(func() {
+		_, err := exec.LookPath("rg")
+		ripgrepAvailable = err == nil
+	})
+}
 
 type GrepOptions struct {
 	Pattern         string
@@ -23,10 +37,10 @@ type GrepOptions struct {
 }
 
 type GrepMatch struct {
-	Path     string `json:"path"`
-	LineNum  int    `json:"line_num"`
-	LineText string `json:"line_text"`
-	ModTimeUnix  int64  `json:"mod_time_unix"`
+	Path        string `json:"path"`
+	LineNum     int    `json:"line_num"`
+	LineText    string `json:"line_text"`
+	ModTimeUnix int64  `json:"mod_time_unix"`
 }
 
 type GrepResult struct {
@@ -38,6 +52,11 @@ type GrepResult struct {
 }
 
 func (m *Manager) Grep(ctx context.Context, opts GrepOptions) (*GrepResult, error) {
+	checkRipgrep()
+	if !ripgrepAvailable {
+		return nil, ripgrepNotFoundError
+	}
+
 	searchPath := opts.Path
 	if searchPath == "" {
 		searchPath = "."
