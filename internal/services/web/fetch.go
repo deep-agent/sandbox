@@ -122,13 +122,26 @@ func (f *Fetcher) Fetch(ctx context.Context, rawURL string) (*FetchResult, error
 	}
 
 	f.cacheMu.Lock()
-	f.cache[rawURL] = cacheEntry{
-		content:   content,
-		timestamp: time.Now(),
+	now := time.Now()
+	f.cleanExpiredCacheLocked(now)
+
+	size := len(content)
+	if f.maxCacheBytes <= 0 || size <= f.maxCacheBytes {
+		if old, ok := f.cache[rawURL]; ok {
+			f.currentBytes -= old.size
+		}
+		f.cache[rawURL] = cacheEntry{
+			content:   content,
+			timestamp: now,
+			size:      size,
+		}
+		f.currentBytes += size
+		f.ensureCapacityLocked()
+	}
+	if f.currentBytes < 0 {
+		f.currentBytes = 0
 	}
 	f.cacheMu.Unlock()
-
-	f.cleanExpiredCache()
 
 	return &FetchResult{Content: content}, nil
 }
@@ -137,10 +150,45 @@ func (f *Fetcher) cleanExpiredCache() {
 	f.cacheMu.Lock()
 	defer f.cacheMu.Unlock()
 
-	now := time.Now()
+	f.cleanExpiredCacheLocked(time.Now())
+	if f.currentBytes < 0 {
+		f.currentBytes = 0
+	}
+}
+
+func (f *Fetcher) cleanExpiredCacheLocked(now time.Time) {
 	for key, entry := range f.cache {
 		if now.Sub(entry.timestamp) > f.cacheTTL {
 			delete(f.cache, key)
+			f.currentBytes -= entry.size
 		}
+	}
+}
+
+func (f *Fetcher) ensureCapacityLocked() {
+	for {
+		tooManyEntries := f.maxCacheSize > 0 && len(f.cache) > f.maxCacheSize
+		tooManyBytes := f.maxCacheBytes > 0 && f.currentBytes > f.maxCacheBytes
+		if !tooManyEntries && !tooManyBytes {
+			return
+		}
+
+		var oldestKey string
+		var oldestTime time.Time
+		found := false
+		for key, entry := range f.cache {
+			if !found || entry.timestamp.Before(oldestTime) {
+				oldestKey = key
+				oldestTime = entry.timestamp
+				found = true
+			}
+		}
+		if !found {
+			return
+		}
+
+		entry := f.cache[oldestKey]
+		delete(f.cache, oldestKey)
+		f.currentBytes -= entry.size
 	}
 }

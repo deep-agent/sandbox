@@ -109,6 +109,141 @@ func TestFetcher_CacheExpiration(t *testing.T) {
 	}
 }
 
+func TestFetcher_CacheMaxSizeEviction(t *testing.T) {
+	callCount := 0
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte(r.URL.Path))
+	}))
+	defer server.Close()
+
+	f := NewFetcher()
+	f.client = server.Client()
+	f.cacheTTL = time.Hour
+	f.maxCacheSize = 2
+	f.maxCacheBytes = 1024 * 1024
+
+	ctx := context.Background()
+	urlA := server.URL + "/a"
+	urlB := server.URL + "/b"
+	urlC := server.URL + "/c"
+
+	if _, err := f.Fetch(ctx, urlA); err != nil {
+		t.Fatalf("fetch a error: %v", err)
+	}
+	time.Sleep(2 * time.Millisecond)
+	if _, err := f.Fetch(ctx, urlB); err != nil {
+		t.Fatalf("fetch b error: %v", err)
+	}
+	time.Sleep(2 * time.Millisecond)
+	if _, err := f.Fetch(ctx, urlC); err != nil {
+		t.Fatalf("fetch c error: %v", err)
+	}
+
+	f.cacheMu.RLock()
+	if len(f.cache) != 2 {
+		f.cacheMu.RUnlock()
+		t.Fatalf("expected cache size 2, got %d", len(f.cache))
+	}
+	if _, ok := f.cache[urlA]; ok {
+		f.cacheMu.RUnlock()
+		t.Fatalf("expected urlA to be evicted")
+	}
+	if _, ok := f.cache[urlB]; !ok {
+		f.cacheMu.RUnlock()
+		t.Fatalf("expected urlB to remain")
+	}
+	if _, ok := f.cache[urlC]; !ok {
+		f.cacheMu.RUnlock()
+		t.Fatalf("expected urlC to remain")
+	}
+	f.cacheMu.RUnlock()
+
+	if _, err := f.Fetch(ctx, urlA); err != nil {
+		t.Fatalf("fetch a again error: %v", err)
+	}
+	if callCount != 4 {
+		t.Fatalf("expected 4 server calls, got %d", callCount)
+	}
+}
+
+func TestFetcher_CacheMaxBytesEviction(t *testing.T) {
+	callCount := 0
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		w.Header().Set("Content-Type", "text/plain")
+		switch r.URL.Path {
+		case "/a":
+			w.Write([]byte("aaaaaa"))
+		case "/b":
+			w.Write([]byte("bbbbbb"))
+		case "/big":
+			w.Write([]byte("xxxxxxxxxxxxxxxxxxxx"))
+		default:
+			w.Write([]byte("ok"))
+		}
+	}))
+	defer server.Close()
+
+	f := NewFetcher()
+	f.client = server.Client()
+	f.cacheTTL = time.Hour
+	f.maxCacheSize = 100
+	f.maxCacheBytes = 10
+
+	ctx := context.Background()
+	urlA := server.URL + "/a"
+	urlB := server.URL + "/b"
+	urlBig := server.URL + "/big"
+
+	if _, err := f.Fetch(ctx, urlA); err != nil {
+		t.Fatalf("fetch a error: %v", err)
+	}
+	time.Sleep(2 * time.Millisecond)
+	if _, err := f.Fetch(ctx, urlB); err != nil {
+		t.Fatalf("fetch b error: %v", err)
+	}
+
+	f.cacheMu.RLock()
+	if _, ok := f.cache[urlA]; ok {
+		f.cacheMu.RUnlock()
+		t.Fatalf("expected urlA to be evicted by bytes limit")
+	}
+	if _, ok := f.cache[urlB]; !ok {
+		f.cacheMu.RUnlock()
+		t.Fatalf("expected urlB to remain")
+	}
+	if f.currentBytes != 6 {
+		f.cacheMu.RUnlock()
+		t.Fatalf("expected currentBytes=6, got %d", f.currentBytes)
+	}
+	f.cacheMu.RUnlock()
+
+	if _, err := f.Fetch(ctx, urlBig); err != nil {
+		t.Fatalf("fetch big error: %v", err)
+	}
+
+	f.cacheMu.RLock()
+	if _, ok := f.cache[urlBig]; ok {
+		f.cacheMu.RUnlock()
+		t.Fatalf("expected oversized entry not to be cached")
+	}
+	if _, ok := f.cache[urlB]; !ok {
+		f.cacheMu.RUnlock()
+		t.Fatalf("expected urlB to remain after big fetch")
+	}
+	if f.currentBytes != 6 {
+		f.cacheMu.RUnlock()
+		t.Fatalf("expected currentBytes=6 after big fetch, got %d", f.currentBytes)
+	}
+	f.cacheMu.RUnlock()
+
+	if callCount != 3 {
+		t.Fatalf("expected 3 server calls, got %d", callCount)
+	}
+}
+
 func TestFetcher_FetchHTML(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
