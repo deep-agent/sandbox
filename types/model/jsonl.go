@@ -17,3 +17,8 @@ type JSONLReadRequest struct {
 type JSONLReadResult struct {
 	Lines []string `json:"lines"`
 }
+
+type JSONLAppendRequest struct {
+	File       string `json:"file" vd:"len($)>0"`
+	JSONString string `json:"json_string" vd:"len($)>0"`
+}

@@ -59,4 +59,5 @@ type WebClient interface {
 type JSONLReader interface {
 	JSONLCountLines(req *model.JSONLCountRequest) (*model.JSONLCountResult, error)
 	JSONLReadLines(req *model.JSONLReadRequest) (*model.JSONLReadResult, error)
+	JSONLAppendLine(req *model.JSONLAppendRequest) error
 }

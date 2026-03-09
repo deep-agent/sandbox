@@ -1,6 +1,7 @@
 package jsonl
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -153,5 +154,82 @@ func TestReadLinesFileNotExist(t *testing.T) {
 	_, err := s.ReadLines("/nonexistent/file.jsonl", 0, 10)
 	if err == nil {
 		t.Error("ReadLines() expected error for nonexistent file")
+	}
+}
+
+func TestAppendLineNewFile(t *testing.T) {
+	s := NewService()
+	filePath := filepath.Join(t.TempDir(), "new.jsonl")
+
+	if err := s.AppendLine(filePath, `{"id":1}`); err != nil {
+		t.Fatalf("AppendLine() error = %v", err)
+	}
+
+	content, _ := os.ReadFile(filePath)
+	if string(content) != "{\"id\":1}\n" {
+		t.Errorf("file content = %q, want %q", string(content), "{\"id\":1}\n")
+	}
+}
+
+func TestAppendLineExistingFile(t *testing.T) {
+	s := NewService()
+	lines := []string{`{"id":1}`}
+	filePath := createTestFile(t, lines)
+
+	if err := s.AppendLine(filePath, `{"id":2}`); err != nil {
+		t.Fatalf("AppendLine() error = %v", err)
+	}
+
+	count, err := s.CountLines(filePath)
+	if err != nil {
+		t.Fatalf("CountLines() error = %v", err)
+	}
+	if count != 2 {
+		t.Errorf("CountLines() = %d, want 2", count)
+	}
+
+	result, err := s.ReadLines(filePath, 1, 1)
+	if err != nil {
+		t.Fatalf("ReadLines() error = %v", err)
+	}
+	if len(result) != 1 || result[0] != `{"id":2}` {
+		t.Errorf("ReadLines() = %v, want [%q]", result, `{"id":2}`)
+	}
+}
+
+func TestAppendLineFileWithTrailingNewline(t *testing.T) {
+	s := NewService()
+	filePath := filepath.Join(t.TempDir(), "trailing.jsonl")
+	if err := os.WriteFile(filePath, []byte("{\"id\":1}\n"), 0644); err != nil {
+		t.Fatalf("failed to create file: %v", err)
+	}
+
+	if err := s.AppendLine(filePath, `{"id":2}`); err != nil {
+		t.Fatalf("AppendLine() error = %v", err)
+	}
+
+	content, _ := os.ReadFile(filePath)
+	if string(content) != "{\"id\":1}\n{\"id\":2}\n" {
+		t.Errorf("file content = %q, want %q", string(content), "{\"id\":1}\n{\"id\":2}\n")
+	}
+}
+
+func TestAppendLineMultiple(t *testing.T) {
+	s := NewService()
+	filePath := filepath.Join(t.TempDir(), "multi.jsonl")
+
+	for i := 1; i <= 3; i++ {
+		line := fmt.Sprintf(`{"id":%d}`, i)
+		if err := s.AppendLine(filePath, line); err != nil {
+			t.Fatalf("AppendLine() error = %v", err)
+		}
+	}
+
+	count, err := s.CountLines(filePath)
+	if err != nil {
+		t.Fatalf("CountLines() error = %v", err)
+	}
+	if count != 3 {
+		t.Errorf("CountLines() = %d, want 3", count)
 	}
 }

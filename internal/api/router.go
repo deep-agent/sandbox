@@ -120,6 +120,7 @@ func (r *Router) Setup() {
 		{
 			jsonlGroup.POST("/count", jsonlHandler.CountLines)
 			jsonlGroup.POST("/read", jsonlHandler.ReadLines)
+			jsonlGroup.POST("/append", jsonlHandler.AppendLine)
 		}
 
 		v1.GET("/terminal/ws", r.terminalHandler.HandleWebSocket)

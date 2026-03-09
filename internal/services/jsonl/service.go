@@ -60,3 +60,40 @@ func (s *Service) ReadLines(file string, startLine, count int) ([]string, error)
 
 	return lines, nil
 }
+
+func (s *Service) AppendLine(file, jsonString string) error {
+	// Check if existing file needs a leading newline
+	info, err := os.Stat(file)
+	if err == nil && info.Size() > 0 {
+		rf, err := os.Open(file)
+		if err != nil {
+			return err
+		}
+		buf := make([]byte, 1)
+		_, err = rf.ReadAt(buf, info.Size()-1)
+		rf.Close()
+		if err != nil {
+			return err
+		}
+		if buf[0] != '\n' {
+			f, err := os.OpenFile(file, os.O_APPEND|os.O_WRONLY, 0644)
+			if err != nil {
+				return err
+			}
+			_, err = f.WriteString("\n")
+			f.Close()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = f.WriteString(jsonString + "\n")
+	return err
+}

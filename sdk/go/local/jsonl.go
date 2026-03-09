@@ -21,3 +21,7 @@ func (c *Client) JSONLReadLines(req *model.JSONLReadRequest) (*model.JSONLReadRe
 
 	return &model.JSONLReadResult{Lines: lines}, nil
 }
+
+func (c *Client) JSONLAppendLine(req *model.JSONLAppendRequest) error {
+	return c.jsonlService.AppendLine(req.File, req.JSONString)
+}

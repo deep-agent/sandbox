@@ -66,3 +66,27 @@ func (h *JSONLHandler) ReadLines(ctx context.Context, c *app.RequestContext) {
 		Data: model.JSONLReadResult{Lines: lines},
 	})
 }
+
+func (h *JSONLHandler) AppendLine(ctx context.Context, c *app.RequestContext) {
+	var req model.JSONLAppendRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.Response{
+			Code:    400,
+			Message: "invalid request: " + err.Error(),
+		})
+		return
+	}
+
+	if err := h.service.AppendLine(req.File, req.JSONString); err != nil {
+		c.JSON(http.StatusInternalServerError, model.Response{
+			Code:    500,
+			Message: "failed to append line: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Response{
+		Code:    0,
+		Message: "success",
+	})
+}

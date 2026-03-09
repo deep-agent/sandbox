@@ -34,3 +34,8 @@ func (c *Client) JSONLReadLines(req *model.JSONLReadRequest) (*model.JSONLReadRe
 
 	return &result, nil
 }
+
+func (c *Client) JSONLAppendLine(req *model.JSONLAppendRequest) error {
+	_, err := c.doRequest("POST", "/v1/jsonl/append", req)
+	return err
+}
