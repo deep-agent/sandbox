@@ -11,7 +11,7 @@ type JSONLCountResult struct {
 type JSONLReadRequest struct {
 	File      string `json:"file" vd:"len($)>0"`
 	StartLine int    `json:"start_line" vd:"$>=0"`
-	Count     int    `json:"count" vd:"$>0"`
+	Count     *int   `json:"count"`
 }
 
 type JSONLReadResult struct {

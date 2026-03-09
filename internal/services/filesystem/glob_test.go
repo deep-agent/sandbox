@@ -147,11 +147,11 @@ func TestGlobWithWalk(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		pattern    string
-		limit      int
-		wantCount  int
-		wantTrunc  bool
+		name      string
+		pattern   string
+		limit     int
+		wantCount int
+		wantTrunc bool
 	}{
 		{
 			name:      "match all txt files recursively",

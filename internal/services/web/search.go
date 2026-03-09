@@ -22,15 +22,15 @@ type SearchResponse struct {
 }
 
 type mcpRequest struct {
-	JSONRPC string         `json:"jsonrpc"`
-	ID      int            `json:"id"`
-	Method  string         `json:"method"`
-	Params  mcpCallParams  `json:"params"`
+	JSONRPC string        `json:"jsonrpc"`
+	ID      int           `json:"id"`
+	Method  string        `json:"method"`
+	Params  mcpCallParams `json:"params"`
 }
 
 type mcpCallParams struct {
-	Name      string            `json:"name"`
-	Arguments mcpSearchArgs     `json:"arguments"`
+	Name      string        `json:"name"`
+	Arguments mcpSearchArgs `json:"arguments"`
 }
 
 type mcpSearchArgs struct {

@@ -33,7 +33,7 @@ func (s *Service) CountLines(file string) (int, error) {
 	return count, nil
 }
 
-func (s *Service) ReadLines(file string, startLine, count int) ([]string, error) {
+func (s *Service) ReadLines(file string, startLine int, count *int) ([]string, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -50,9 +50,17 @@ func (s *Service) ReadLines(file string, startLine, count int) ([]string, error)
 	}
 
 	// Read requested lines
-	lines := make([]string, 0, count)
-	for len(lines) < count && scanner.Scan() {
-		lines = append(lines, scanner.Text())
+	lines := make([]string, 0)
+	if count == nil {
+		// Read until end of file
+		for scanner.Scan() {
+			lines = append(lines, scanner.Text())
+		}
+	} else {
+		// Read up to count lines
+		for len(lines) < *count && scanner.Scan() {
+			lines = append(lines, scanner.Text())
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err

@@ -347,4 +347,3 @@ func TestGrepTool_Handler_RegexPattern(t *testing.T) {
 		t.Errorf("expected output to contain 'function hello', got: %s", output)
 	}
 }
-

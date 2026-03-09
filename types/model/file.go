@@ -20,11 +20,11 @@ type FileListRequest struct {
 }
 
 type FileInfo struct {
-	Name    string `json:"name"`
-	Path    string `json:"path"`
-	Size    int64  `json:"size"`
-	IsDir   bool   `json:"is_dir"`
-	Mode    string `json:"mode"`
+	Name        string `json:"name"`
+	Path        string `json:"path"`
+	Size        int64  `json:"size"`
+	IsDir       bool   `json:"is_dir"`
+	Mode        string `json:"mode"`
 	ModTimeUnix int64  `json:"mod_time_unix"`
 }
 

@@ -71,7 +71,8 @@ func TestReadLines(t *testing.T) {
 	}
 	filePath := createTestFile(t, lines)
 
-	result, err := s.ReadLines(filePath, 0, 3)
+	count := 3
+	result, err := s.ReadLines(filePath, 0, &count)
 	if err != nil {
 		t.Fatalf("ReadLines() error = %v", err)
 	}
@@ -97,7 +98,8 @@ func TestReadLinesWithOffset(t *testing.T) {
 	}
 	filePath := createTestFile(t, lines)
 
-	result, err := s.ReadLines(filePath, 2, 2)
+	count := 2
+	result, err := s.ReadLines(filePath, 2, &count)
 	if err != nil {
 		t.Fatalf("ReadLines() error = %v", err)
 	}
@@ -120,7 +122,8 @@ func TestReadLinesBeyondEnd(t *testing.T) {
 	}
 	filePath := createTestFile(t, lines)
 
-	result, err := s.ReadLines(filePath, 1, 10)
+	count := 10
+	result, err := s.ReadLines(filePath, 1, &count)
 	if err != nil {
 		t.Fatalf("ReadLines() error = %v", err)
 	}
@@ -140,7 +143,8 @@ func TestReadLinesStartBeyondEnd(t *testing.T) {
 	}
 	filePath := createTestFile(t, lines)
 
-	result, err := s.ReadLines(filePath, 10, 5)
+	count := 5
+	result, err := s.ReadLines(filePath, 10, &count)
 	if err != nil {
 		t.Fatalf("ReadLines() error = %v", err)
 	}
@@ -151,9 +155,36 @@ func TestReadLinesStartBeyondEnd(t *testing.T) {
 
 func TestReadLinesFileNotExist(t *testing.T) {
 	s := NewService()
-	_, err := s.ReadLines("/nonexistent/file.jsonl", 0, 10)
+	count := 10
+	_, err := s.ReadLines("/nonexistent/file.jsonl", 0, &count)
 	if err == nil {
 		t.Error("ReadLines() expected error for nonexistent file")
+	}
+}
+
+func TestReadLinesToEnd(t *testing.T) {
+	s := NewService()
+	lines := []string{
+		`{"id":1}`,
+		`{"id":2}`,
+		`{"id":3}`,
+		`{"id":4}`,
+		`{"id":5}`,
+	}
+	filePath := createTestFile(t, lines)
+
+	result, err := s.ReadLines(filePath, 2, nil)
+	if err != nil {
+		t.Fatalf("ReadLines() error = %v", err)
+	}
+	if len(result) != 3 {
+		t.Fatalf("ReadLines() returned %d lines, want 3", len(result))
+	}
+	if result[0] != `{"id":3}` {
+		t.Errorf("ReadLines()[0] = %q, want %q", result[0], `{"id":3}`)
+	}
+	if result[2] != `{"id":5}` {
+		t.Errorf("ReadLines()[2] = %q, want %q", result[2], `{"id":5}`)
 	}
 }
 
@@ -188,7 +219,8 @@ func TestAppendLineExistingFile(t *testing.T) {
 		t.Errorf("CountLines() = %d, want 2", count)
 	}
 
-	result, err := s.ReadLines(filePath, 1, 1)
+	countRead := 1
+	result, err := s.ReadLines(filePath, 1, &countRead)
 	if err != nil {
 		t.Fatalf("ReadLines() error = %v", err)
 	}

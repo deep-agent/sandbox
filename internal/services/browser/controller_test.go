@@ -62,12 +62,12 @@ func TestPageInfo(t *testing.T) {
 
 func TestController_GetInfo_Disconnected(t *testing.T) {
 	c := NewController("ws://localhost:99999")
-	
+
 	info, err := c.GetInfo()
 	if err != nil {
 		t.Fatalf("GetInfo() error = %v", err)
 	}
-	
+
 	if info == nil {
 		t.Fatal("GetInfo() returned nil info")
 	}
@@ -81,12 +81,12 @@ func TestController_GetInfo_Disconnected(t *testing.T) {
 
 func TestController_GetInfo_InvalidPort(t *testing.T) {
 	c := NewController("ws://localhost:0")
-	
+
 	info, err := c.GetInfo()
 	if err != nil {
 		t.Fatalf("GetInfo() error = %v", err)
 	}
-	
+
 	if info.Status != "disconnected" {
 		t.Errorf("Status = %q, want %q", info.Status, "disconnected")
 	}

@@ -8,10 +8,10 @@ func TestValidatePath(t *testing.T) {
 	m := NewManager()
 
 	tests := []struct {
-		name      string
-		path      string
-		wantErr   bool
-		checkAbs  bool
+		name     string
+		path     string
+		wantErr  bool
+		checkAbs bool
 	}{
 		{
 			name:     "relative path .task",
