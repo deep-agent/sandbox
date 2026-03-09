@@ -322,7 +322,7 @@ MCP Hub 提供以下工具：
 
 ## 环境变量
 
-### 核心配置
+### 容器运行时配置
 
 | 变量 | 默认值 | 描述 |
 |------|--------|------|
@@ -331,9 +331,14 @@ MCP Hub 提供以下工具：
 | `BROWSER_REMOTE_DEBUGGING_PORT` | 9222 | Chrome CDP 端口 |
 | `VNC_SERVER_PORT` | 5900 | VNC 服务端口 |
 | `WEBSOCKET_PROXY_PORT` | 6080 | WebSocket 代理端口 (noVNC) |
-| `WORKSPACE` | $HOME | 工作目录 |
+| `WORKSPACE` | /home/sandbox/workspace | 工作目录 |
+| `SUPERVISOR_CONF_DIR` | /home/sandbox/app.supervisor.d | Supervisord 配置目录 |
+| `APP_SERVICE_PORT` | 9000 | 用户 HTTP 服务端口（通过 `/app/` 访问） |
 | `JWT_SECRET` | - | JWT HMAC 共享密钥 (可选) |
 | `JWT_AUTH_REQUIRED` | false | 强制要求鉴权 (可选) |
+| `ENABLE_MCP` | true | 是否启用 MCP Hub 进程 |
+| `ENABLE_BROWSER` | true | 是否启用 Chromium 进程 |
+| `ENABLE_VNC` | true | 是否启用 VNC/noVNC 进程 |
 | `TZ` | Asia/Shanghai | 时区 |
 
 ### JWT 鉴权 (可选)
@@ -348,13 +353,25 @@ export JWT_SECRET="your-secret-key"
 export JWT_AUTH_REQUIRED="true"            # 可选，强制鉴权
 ```
 
-### Docker 扩展配置
+### Docker Compose 变量
+
+这些变量由宿主机侧的 `docker-compose` 消费。
 
 | 变量 | 默认值 | 描述 |
 |------|--------|------|
-| `SUPERVISOR_CONF_DIR` | /home/sandbox/app.supervisor.d | Supervisord 配置目录 |
-| `USERDATA_DIR` | /home/sandbox/userdata | 用户数据目录 (脚本、二进制文件) |
-| `APP_SERVICE_PORT` | 9000 | 用户 HTTP 服务端口 |
+| `HOST_PORT` | 8080 | 宿主机映射到容器 8080 的端口 |
+| `LOCAL_WORKSPACE` | ./docker/volumes/workspace | 挂载到 `/home/sandbox/workspace` 的宿主机路径 |
+| `LOCAL_SUPERVISOR_CONF` | ./docker/volumes/app.supervisor.d | 挂载到 `/home/sandbox/app.supervisor.d` 的宿主机路径 |
+| `LOCAL_USERDATA` | ./docker/volumes/userdata | 挂载到 `/home/sandbox/userdata` 的宿主机路径 |
+| `LOCAL_INIT_SCRIPTS` | ./docker/volumes/init.d | 挂载到 `/docker-entrypoint.d` 的宿主机路径 |
+
+### Docker 构建参数 (可选)
+
+| 变量 | 默认值 | 描述 |
+|------|--------|------|
+| `HTTP_PROXY` | - | `docker build` 代理 |
+| `HTTPS_PROXY` | - | `docker build` 代理 |
+| `NO_PROXY` | localhost,127.0.0.1 | `docker build` 不走代理列表 |
 
 ## 扩展能力
 

@@ -86,14 +86,12 @@ RUN mkdir -p /var/lib/nginx/body /var/lib/nginx/proxy /var/lib/nginx/fastcgi /va
 ENV HOME=/home/sandbox
 ENV WORKSPACE=/home/sandbox/workspace
 ENV SUPERVISOR_CONF_DIR=/home/sandbox/app.supervisor.d
-ENV USERDATA_DIR=/home/sandbox/userdata
 ENV DISPLAY=:99
 ENV VNC_SERVER_PORT=5900
 ENV WEBSOCKET_PROXY_PORT=6080
 ENV SANDBOX_SRV_PORT=8000
 ENV MCP_HUB_PORT=8001
 ENV BROWSER_REMOTE_DEBUGGING_PORT=9222
-ENV PUBLIC_PORT=8080
 ENV APP_SERVICE_PORT=9000
 
 COPY --chown=sandbox:sandbox docker/scripts/supervisord.conf /etc/supervisor/conf.d/supervisord.conf

@@ -123,7 +123,6 @@ Key environment variables for the sandbox container:
 
 - `WORKSPACE`: workspace directory (default `/home/sandbox/workspace`).
 - `SUPERVISOR_CONF_DIR`: Supervisord config directory (default `/home/sandbox/app.supervisor.d`).
-- `USERDATA_DIR`: user data directory (default `/home/sandbox/userdata`).
 - `JWT_SECRET`: HMAC shared secret for JWT authentication (HS256/384/512). Leave empty to disable auth.
 - `JWT_AUTH_REQUIRED`: set to `true` to reject all requests when `JWT_SECRET` is not configured.
 

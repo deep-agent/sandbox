@@ -23,7 +23,6 @@ services:
     environment:
       WORKSPACE: ${WORKSPACE:-/home/sandbox/workspace}
       SUPERVISOR_CONF_DIR: ${SUPERVISOR_CONF_DIR:-/home/sandbox/app.supervisor.d}
-      USERDATA_DIR: ${USERDATA_DIR:-/home/sandbox/userdata}
       TZ: ${TZ:-Asia/Shanghai}
       JWT_SECRET: ${JWT_SECRET:-}
       JWT_AUTH_REQUIRED: ${JWT_AUTH_REQUIRED:-}

@@ -282,7 +282,7 @@ MCP Hub provides the following tools:
 
 ## Environment Variables
 
-### Core Configuration
+### Container Runtime Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -291,9 +291,14 @@ MCP Hub provides the following tools:
 | `BROWSER_REMOTE_DEBUGGING_PORT` | 9222 | Chrome CDP port |
 | `VNC_SERVER_PORT` | 5900 | VNC service port |
 | `WEBSOCKET_PROXY_PORT` | 6080 | WebSocket proxy port (noVNC) |
-| `WORKSPACE` | $HOME | Working directory |
+| `WORKSPACE` | /home/sandbox/workspace | Working directory |
+| `SUPERVISOR_CONF_DIR` | /home/sandbox/app.supervisor.d | Supervisord config directory |
+| `APP_SERVICE_PORT` | 9000 | User HTTP service port (proxied via `/app/`) |
 | `JWT_SECRET` | - | JWT HMAC shared secret (optional) |
 | `JWT_AUTH_REQUIRED` | false | Enforce authentication (optional) |
+| `ENABLE_MCP` | true | Enable MCP Hub process |
+| `ENABLE_BROWSER` | true | Enable Chromium process |
+| `ENABLE_VNC` | true | Enable VNC/noVNC processes |
 | `TZ` | Asia/Shanghai | Timezone |
 
 ### JWT Authentication (Optional)
@@ -308,13 +313,25 @@ export JWT_SECRET="your-secret-key"
 export JWT_AUTH_REQUIRED="true"            # Optional, enforce auth
 ```
 
-### Docker Extended Configuration
+### Docker Compose Variables
+
+These variables are consumed by `docker-compose` on the host side.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SUPERVISOR_CONF_DIR` | /home/sandbox/app.supervisor.d | Supervisord config directory |
-| `USERDATA_DIR` | /home/sandbox/userdata | User data directory (scripts, binaries) |
-| `APP_SERVICE_PORT` | 9000 | User HTTP service port |
+| `HOST_PORT` | 8080 | Host port mapped to container port 8080 |
+| `LOCAL_WORKSPACE` | ./docker/volumes/workspace | Host path mounted to `/home/sandbox/workspace` |
+| `LOCAL_SUPERVISOR_CONF` | ./docker/volumes/app.supervisor.d | Host path mounted to `/home/sandbox/app.supervisor.d` |
+| `LOCAL_USERDATA` | ./docker/volumes/userdata | Host path mounted to `/home/sandbox/userdata` |
+| `LOCAL_INIT_SCRIPTS` | ./docker/volumes/init.d | Host path mounted to `/docker-entrypoint.d` |
+
+### Docker Build Arguments (Optional)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `HTTP_PROXY` | - | Proxy for `docker build` |
+| `HTTPS_PROXY` | - | Proxy for `docker build` |
+| `NO_PROXY` | localhost,127.0.0.1 | No-proxy list for `docker build` |
 
 ## Extensibility
 
