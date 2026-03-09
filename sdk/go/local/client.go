@@ -7,6 +7,7 @@ import (
 	"github.com/deep-agent/sandbox/internal/services/bash"
 	"github.com/deep-agent/sandbox/internal/services/browser"
 	"github.com/deep-agent/sandbox/internal/services/filesystem"
+	"github.com/deep-agent/sandbox/internal/services/jsonl"
 	"github.com/deep-agent/sandbox/internal/services/web"
 	sandbox "github.com/deep-agent/sandbox/sdk/go"
 	"github.com/deep-agent/sandbox/types/model"
@@ -17,6 +18,7 @@ var _ sandbox.Sandbox = (*Client)(nil)
 type Client struct {
 	bashExecutor *bash.Executor
 	fileManager  *filesystem.Manager
+	jsonlService *jsonl.Service
 	browserCtrl  *browser.Controller
 	webFetcher   *web.Fetcher
 	webSearcher  *web.Searcher
@@ -41,6 +43,7 @@ func NewClient(workDir string, opts ...Option) *Client {
 	c := &Client{
 		bashExecutor: bash.NewExecutor(),
 		fileManager:  filesystem.NewManager(),
+		jsonlService: jsonl.NewService(),
 		webFetcher:   web.NewFetcher(),
 		webSearcher:  web.NewSearcher(),
 		sandboxCtx: &model.SandboxContext{

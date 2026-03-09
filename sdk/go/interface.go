@@ -9,6 +9,7 @@ type Sandbox interface {
 	GrepSearcher
 	BrowserController
 	WebClient
+	JSONLReader
 }
 
 type ContextProvider interface {
@@ -53,4 +54,9 @@ type BrowserController interface {
 type WebClient interface {
 	WebFetch(req *model.WebFetchRequest) (*model.WebFetchResult, error)
 	WebSearch(req *model.WebSearchRequest) (*model.WebSearchResult, error)
+}
+
+type JSONLReader interface {
+	JSONLCountLines(req *model.JSONLCountRequest) (*model.JSONLCountResult, error)
+	JSONLReadLines(req *model.JSONLReadRequest) (*model.JSONLReadResult, error)
 }

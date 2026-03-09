@@ -11,6 +11,7 @@ import (
 	"github.com/deep-agent/sandbox/internal/config"
 	"github.com/deep-agent/sandbox/internal/services/browser"
 	"github.com/deep-agent/sandbox/internal/services/filesystem"
+	"github.com/deep-agent/sandbox/internal/services/jsonl"
 	"github.com/deep-agent/sandbox/internal/services/web"
 	"github.com/hertz-contrib/cors"
 )
@@ -44,6 +45,8 @@ func (r *Router) Setup() {
 	grepHandler := handlers.NewGrepHandler(fileManager)
 	browserHandler := handlers.NewBrowserHandler(browserController)
 	webHandler := handlers.NewWebHandler(webFetcher, webSearcher)
+	jsonlService := jsonl.NewService()
+	jsonlHandler := handlers.NewJSONLHandler(jsonlService)
 	swaggerHandler := handlers.NewSwaggerHandler()
 	wsHandler := handlers.NewWSHandler()
 
@@ -111,6 +114,12 @@ func (r *Router) Setup() {
 		{
 			webGroup.POST("/fetch", webHandler.Fetch)
 			webGroup.POST("/search", webHandler.Search)
+		}
+
+		jsonlGroup := v1.Group("/jsonl")
+		{
+			jsonlGroup.POST("/count", jsonlHandler.CountLines)
+			jsonlGroup.POST("/read", jsonlHandler.ReadLines)
 		}
 
 		v1.GET("/terminal/ws", r.terminalHandler.HandleWebSocket)
