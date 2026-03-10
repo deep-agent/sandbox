@@ -76,7 +76,11 @@ RUN useradd -m -s /bin/bash sandbox && \
     mkdir -p /home/sandbox/workspace && \
     mkdir -p /home/sandbox/app.supervisor.d && \
     mkdir -p /home/sandbox/userdata && \
+    mkdir -p /home/sandbox/.ssh && \
     mkdir -p /docker-entrypoint.d && \
+    echo "Host *\n    StrictHostKeyChecking no\n    UserKnownHostsFile /dev/null" > /home/sandbox/.ssh/config && \
+    chmod 700 /home/sandbox/.ssh && \
+    chmod 600 /home/sandbox/.ssh/config && \
     chown -R sandbox:sandbox /home/sandbox /docker-entrypoint.d
 
 RUN mkdir -p /var/lib/nginx/body /var/lib/nginx/proxy /var/lib/nginx/fastcgi /var/lib/nginx/uwsgi /var/lib/nginx/scgi /var/www/terminal && \
