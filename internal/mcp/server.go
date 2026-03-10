@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/deep-agent/sandbox/pkg/ctxutil"
+	"github.com/deep-agent/sandbox/pkg/logger"
 	"github.com/deep-agent/sandbox/types/consts"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -37,8 +37,8 @@ func NewServer(name, version string, port int) *Server {
 		port:      port,
 	}
 
-	s.Use(loggingMiddleware)
 	s.Use(contextMiddleware)
+	s.Use(loggingMiddleware)
 
 	return s
 }
@@ -63,7 +63,7 @@ func contextMiddleware(next server.ToolHandlerFunc) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		sessionID := request.Header.Get(consts.HeaderSessionID)
 		cwd := request.Header.Get(consts.HeaderWorkspace)
-		log.Printf("[contextMiddleware] sessionID=%s, cwd=%s", sessionID, cwd)
+		logger.Printf("[contextMiddleware] sessionID=%s, cwd=%s", sessionID, cwd)
 		if sessionID != "" {
 			ctx = ctxutil.WithSessionID(ctx, sessionID)
 		}
@@ -81,7 +81,7 @@ func loggingMiddleware(next server.ToolHandlerFunc) server.ToolHandlerFunc {
 		toolName := request.Params.Name
 		sessionID := ctxutil.GetSessionIDFromCtx(ctx)
 		argsJSON, _ := json.Marshal(request.Params.Arguments)
-		log.Printf("[%s][SessionID:%s] Request: %s", toolName, sessionID, string(argsJSON))
+		logger.Printf("[%s][SessionID:%s] Request: %s", toolName, sessionID, string(argsJSON))
 
 		result, err := next(ctx, request)
 
@@ -89,11 +89,11 @@ func loggingMiddleware(next server.ToolHandlerFunc) server.ToolHandlerFunc {
 		responseText := getResultText(result)
 
 		if err != nil {
-			log.Printf("[%s][SessionID:%s] Error after %v: %v \n=============", toolName, sessionID, duration, err)
+			logger.Printf("[%s][SessionID:%s] Error after %v: %v \n=============", toolName, sessionID, duration, err)
 		} else if result != nil && result.IsError {
-			log.Printf("[%s][SessionID:%s] Failed after %v\nResponse: %s \n=============", toolName, sessionID, duration, responseText)
+			logger.Printf("[%s][SessionID:%s] Failed after %v\nResponse: %s \n=============", toolName, sessionID, duration, responseText)
 		} else {
-			log.Printf("[%s][SessionID:%s] Success after %v\nResponse: %s \n=============", toolName, sessionID, duration, responseText)
+			logger.Printf("[%s][SessionID:%s] Success after %v\nResponse: %s \n=============", toolName, sessionID, duration, responseText)
 		}
 
 		return result, err
@@ -120,7 +120,7 @@ func (s *Server) Start() error {
 	s.httpServer = server.NewStreamableHTTPServer(s.mcpServer)
 
 	addr := fmt.Sprintf(":%d", s.port)
-	log.Printf("Starting MCP Streamable HTTP server on %s", addr)
+	logger.Printf("Starting MCP Streamable HTTP server on %s", addr)
 
 	return s.httpServer.Start(addr)
 }

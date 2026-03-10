@@ -277,9 +277,15 @@ func TestFileList(t *testing.T) {
 	workDir := t.TempDir()
 	client := NewClient(workDir)
 
-	os.WriteFile(filepath.Join(workDir, "file1.txt"), []byte("1"), 0644)
-	os.WriteFile(filepath.Join(workDir, "file2.txt"), []byte("2"), 0644)
-	os.Mkdir(filepath.Join(workDir, "subdir"), 0755)
+	if err := os.WriteFile(filepath.Join(workDir, "file1.txt"), []byte("1"), 0644); err != nil {
+		t.Fatalf("failed to create file1.txt: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workDir, "file2.txt"), []byte("2"), 0644); err != nil {
+		t.Fatalf("failed to create file2.txt: %v", err)
+	}
+	if err := os.Mkdir(filepath.Join(workDir, "subdir"), 0755); err != nil {
+		t.Fatalf("failed to create subdir: %v", err)
+	}
 
 	result, err := client.FileList(&model.FileListRequest{
 		Path: workDir,
@@ -298,7 +304,9 @@ func TestFileDelete(t *testing.T) {
 	client := NewClient(workDir)
 
 	testFile := filepath.Join(workDir, "to_delete.txt")
-	os.WriteFile(testFile, []byte("delete me"), 0644)
+	if err := os.WriteFile(testFile, []byte("delete me"), 0644); err != nil {
+		t.Fatalf("failed to create test file: %v", err)
+	}
 
 	err := client.FileDelete(&model.FileDeleteRequest{
 		Path: testFile,
@@ -318,7 +326,9 @@ func TestFileMove(t *testing.T) {
 
 	srcFile := filepath.Join(workDir, "src.txt")
 	dstFile := filepath.Join(workDir, "dst.txt")
-	os.WriteFile(srcFile, []byte("move me"), 0644)
+	if err := os.WriteFile(srcFile, []byte("move me"), 0644); err != nil {
+		t.Fatalf("failed to create source file: %v", err)
+	}
 
 	err := client.FileMove(&model.FileMoveRequest{
 		Source:      srcFile,
@@ -347,7 +357,9 @@ func TestFileCopy(t *testing.T) {
 
 	srcFile := filepath.Join(workDir, "src_copy.txt")
 	dstFile := filepath.Join(workDir, "dst_copy.txt")
-	os.WriteFile(srcFile, []byte("copy me"), 0644)
+	if err := os.WriteFile(srcFile, []byte("copy me"), 0644); err != nil {
+		t.Fatalf("failed to create source file: %v", err)
+	}
 
 	err := client.FileCopy(&model.FileCopyRequest{
 		Source:      srcFile,
@@ -391,7 +403,9 @@ func TestFileExists(t *testing.T) {
 	client := NewClient(workDir)
 
 	existingFile := filepath.Join(workDir, "existing.txt")
-	os.WriteFile(existingFile, []byte("exists"), 0644)
+	if err := os.WriteFile(existingFile, []byte("exists"), 0644); err != nil {
+		t.Fatalf("failed to create existing file: %v", err)
+	}
 
 	result, err := client.FileExists(existingFile)
 	if err != nil {
@@ -416,7 +430,9 @@ func TestGrepSearch(t *testing.T) {
 	client := NewClient(workDir)
 
 	testFile := filepath.Join(workDir, "grep_test.txt")
-	os.WriteFile(testFile, []byte("line one\nfind this line\nline three\n"), 0644)
+	if err := os.WriteFile(testFile, []byte("line one\nfind this line\nline three\n"), 0644); err != nil {
+		t.Fatalf("failed to create test file: %v", err)
+	}
 
 	result, err := client.GrepSearch(&model.GrepRequest{
 		Pattern: "find",
@@ -436,7 +452,9 @@ func TestGrepSearchNoMatch(t *testing.T) {
 	client := NewClient(workDir)
 
 	testFile := filepath.Join(workDir, "grep_nomatch.txt")
-	os.WriteFile(testFile, []byte("line one\nline two\nline three\n"), 0644)
+	if err := os.WriteFile(testFile, []byte("line one\nline two\nline three\n"), 0644); err != nil {
+		t.Fatalf("failed to create test file: %v", err)
+	}
 
 	result, err := client.GrepSearch(&model.GrepRequest{
 		Pattern: "nonexistent",
@@ -456,7 +474,9 @@ func TestGrepSearchCaseInsensitive(t *testing.T) {
 	client := NewClient(workDir)
 
 	testFile := filepath.Join(workDir, "grep_case.txt")
-	os.WriteFile(testFile, []byte("HELLO world\nhello WORLD\n"), 0644)
+	if err := os.WriteFile(testFile, []byte("HELLO world\nhello WORLD\n"), 0644); err != nil {
+		t.Fatalf("failed to create test file: %v", err)
+	}
 
 	result, err := client.GrepSearch(&model.GrepRequest{
 		Pattern:         "hello",
@@ -524,7 +544,9 @@ func TestBrowserNavigate(t *testing.T) {
 func TestBrowserScreenshot(t *testing.T) {
 	client := newBrowserClient(t)
 
-	client.BrowserNavigate(&model.BrowserNavigateRequest{URL: "https://example.com"})
+	if err := client.BrowserNavigate(&model.BrowserNavigateRequest{URL: "https://example.com"}); err != nil {
+		t.Fatalf("navigate failed: %v", err)
+	}
 
 	result, err := client.BrowserScreenshot(&model.BrowserScreenshotRequest{})
 	if err != nil {
@@ -539,7 +561,9 @@ func TestBrowserScreenshot(t *testing.T) {
 func TestBrowserScreenshotFull(t *testing.T) {
 	client := newBrowserClient(t)
 
-	client.BrowserNavigate(&model.BrowserNavigateRequest{URL: "https://example.com"})
+	if err := client.BrowserNavigate(&model.BrowserNavigateRequest{URL: "https://example.com"}); err != nil {
+		t.Fatalf("navigate failed: %v", err)
+	}
 
 	result, err := client.BrowserScreenshot(&model.BrowserScreenshotRequest{
 		Full: true,
@@ -556,7 +580,9 @@ func TestBrowserScreenshotFull(t *testing.T) {
 func TestBrowserEvaluate(t *testing.T) {
 	client := newBrowserClient(t)
 
-	client.BrowserNavigate(&model.BrowserNavigateRequest{URL: "https://example.com"})
+	if err := client.BrowserNavigate(&model.BrowserNavigateRequest{URL: "https://example.com"}); err != nil {
+		t.Fatalf("navigate failed: %v", err)
+	}
 
 	result, err := client.BrowserEvaluate(&model.BrowserEvaluateRequest{
 		Expression: "1 + 1",
@@ -590,7 +616,9 @@ func TestBrowserEvaluateDocumentTitle(t *testing.T) {
 func TestBrowserScroll(t *testing.T) {
 	client := newBrowserClient(t)
 
-	client.BrowserNavigate(&model.BrowserNavigateRequest{URL: "https://example.com"})
+	if err := client.BrowserNavigate(&model.BrowserNavigateRequest{URL: "https://example.com"}); err != nil {
+		t.Fatalf("navigate failed: %v", err)
+	}
 
 	err := client.BrowserScroll(&model.BrowserScrollRequest{X: 0, Y: 100})
 	if err != nil {
@@ -663,7 +691,9 @@ func TestBrowserGetPageInfo(t *testing.T) {
 func TestBrowserPDF(t *testing.T) {
 	client := newBrowserClient(t)
 
-	client.BrowserNavigate(&model.BrowserNavigateRequest{URL: "https://example.com"})
+	if err := client.BrowserNavigate(&model.BrowserNavigateRequest{URL: "https://example.com"}); err != nil {
+		t.Fatalf("navigate failed: %v", err)
+	}
 
 	result, err := client.BrowserPDF()
 	if err != nil {

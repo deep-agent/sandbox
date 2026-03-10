@@ -92,11 +92,15 @@ func (t *Terminal) Close() error {
 	}
 	t.closed = true
 
+	var signalErr error
 	if t.cmd.Process != nil {
-		t.cmd.Process.Signal(syscall.SIGTERM)
+		signalErr = t.cmd.Process.Signal(syscall.SIGTERM)
 	}
 
-	return t.ptmx.Close()
+	if err := t.ptmx.Close(); err != nil {
+		return err
+	}
+	return signalErr
 }
 
 func (t *Terminal) Wait() error {

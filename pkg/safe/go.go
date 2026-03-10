@@ -1,15 +1,16 @@
 package safe
 
 import (
-	"log"
 	"runtime/debug"
+
+	"github.com/deep-agent/sandbox/pkg/logger"
 )
 
 func Go(fn func()) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Printf("[PANIC] goroutine panic: %v\n%s", r, debug.Stack())
+				logger.Printf("[PANIC] goroutine panic: %v\n%s", r, debug.Stack())
 			}
 		}()
 		fn()
@@ -23,7 +24,7 @@ func GoWithRecover(fn func(), onPanic func(r interface{})) {
 				if onPanic != nil {
 					onPanic(r)
 				} else {
-					log.Printf("[PANIC] goroutine panic: %v\n%s", r, debug.Stack())
+					logger.Printf("[PANIC] goroutine panic: %v\n%s", r, debug.Stack())
 				}
 			}
 		}()

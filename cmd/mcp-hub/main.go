@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/deep-agent/sandbox/internal/config"
 	"github.com/deep-agent/sandbox/internal/mcp"
+	"github.com/deep-agent/sandbox/pkg/logger"
 )
 
 func main() {
 	cfg := config.Load()
 
-	log.Printf("Starting MCP Hub on port %d", cfg.MCPHubPort)
+	logger.Printf("Starting MCP Hub on port %d", cfg.MCPHubPort)
 	server := mcp.NewServer("sandbox-mcp", "1.0.0", cfg.MCPHubPort)
 
 	registry := mcp.NewRegistry(mcp.ToolConfig{
@@ -20,6 +20,6 @@ func main() {
 	registry.RegisterAll(server.AddTool)
 
 	if err := server.Start(); err != nil {
-		log.Fatalf("Failed to start MCP Hub: %v", err)
+		logger.Fatalf("Failed to start MCP Hub: %v", err)
 	}
 }

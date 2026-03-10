@@ -42,6 +42,7 @@ sandbox/
 │   └── model/                    # Shared data models (bash, browser, file, grep, web, response)
 ├── pkg/
 │   ├── ctxutil/                  # Context utilities (workspace path, session)
+│   ├── logger/                   # Plain-text logger wrapper
 │   └── safe/                     # Safety utility functions
 ├── docker/
 │   ├── Dockerfile

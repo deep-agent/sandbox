@@ -332,7 +332,9 @@ func TestSearcher_Search_NumResultsLimit(t *testing.T) {
 			NumResults: tc.input,
 		}
 
-		s.Search(ctx, opts)
+		if _, err := s.Search(ctx, opts); err != nil {
+			t.Fatalf("search error: %v", err)
+		}
 
 		if receivedNumResults != tc.expected {
 			t.Errorf("for input %d, expected numResults %d, got %d", tc.input, tc.expected, receivedNumResults)
@@ -365,7 +367,9 @@ func TestSearcher_Search_QueryWithDomains(t *testing.T) {
 		BlockedDomains: []string{"blocked.com"},
 	}
 
-	s.Search(ctx, opts)
+	if _, err := s.Search(ctx, opts); err != nil {
+		t.Fatalf("search error: %v", err)
+	}
 
 	expectedQuery := "test query site:example.com -site:blocked.com"
 	if receivedQuery != expectedQuery {

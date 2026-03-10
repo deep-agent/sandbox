@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/deep-agent/sandbox/pkg/logger"
 	"github.com/deep-agent/sandbox/pkg/safe"
 	"github.com/deep-agent/sandbox/types/consts"
 )
@@ -96,19 +97,25 @@ func (e *Executor) ExecuteBackground(ctx context.Context, command string, workDi
 	}
 
 	safe.Go(func() {
-		done := make(chan struct{})
+		waitErrCh := make(chan error, 1)
 		go func() {
-			cmd.Wait()
-			close(done)
+			waitErrCh <- cmd.Wait()
 		}()
 
 		select {
-		case <-done:
+		case err := <-waitErrCh:
+			if err != nil {
+				logger.Printf("background command wait error: %v", err)
+			}
 		case <-time.After(timeout):
 			if cmd.Process != nil {
-				syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+				if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil {
+					logger.Printf("background command kill error: %v", err)
+				}
 			}
-			<-done
+			if err := <-waitErrCh; err != nil {
+				logger.Printf("background command wait error: %v", err)
+			}
 		}
 	})
 

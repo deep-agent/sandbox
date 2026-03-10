@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -32,7 +31,6 @@ func TestLoadJWTVerifierFromEnv_HS256(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sign token: %v", err)
 	}
-	fmt.Println(tokenStr)
 
 	token, err := jwt.ParseWithClaims(tokenStr, jwt.MapClaims{}, keyfunc, opts...)
 	if err != nil || !token.Valid {

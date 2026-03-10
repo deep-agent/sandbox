@@ -88,7 +88,7 @@ Testing:
 - Keep tests in the same package unless an external API is required.
 
 Logging:
-- There is no explicit logging style guide; use existing patterns in handlers and services.
+- Use `pkg/logger` for runtime logs; avoid the stdlib `log` package in app code.
 - Avoid noisy prints in production paths; rely on structured responses.
 
 Dependencies and modules:

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	"github.com/cloudwego/eino-ext/components/model/ark"
@@ -14,6 +13,7 @@ import (
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/flow/agent/react"
 	"github.com/cloudwego/eino/schema"
+	"github.com/deep-agent/sandbox/pkg/logger"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -23,14 +23,14 @@ func main() {
 
 	mcpTools := getMCPTools(ctx)
 	if len(mcpTools) == 0 {
-		log.Fatal("No MCP tools found")
+		logger.Fatal("No MCP tools found")
 	}
 
 	fmt.Println("=== Available MCP Tools ===")
 	for i, mcpTool := range mcpTools {
 		info, err := mcpTool.Info(ctx)
 		if err != nil {
-			log.Printf("Failed to get tool info: %v", err)
+			logger.Printf("Failed to get tool info: %v", err)
 			continue
 		}
 		fmt.Printf("%d. Name: %s\n", i+1, info.Name)
@@ -43,7 +43,7 @@ func main() {
 		Model:  os.Getenv("ARK_MODEL"),
 	})
 	if err != nil {
-		log.Fatalf("Failed to create chat model: %v", err)
+		logger.Fatalf("Failed to create chat model: %v", err)
 	}
 
 	// callback := react.BuildAgentCallback(&template.ModelCallbackHandler{}, &template.ToolCallbackHandler{})
@@ -54,7 +54,7 @@ func main() {
 		},
 	})
 	if err != nil {
-		log.Fatalf("Failed to create react agent: %v", err)
+		logger.Fatalf("Failed to create react agent: %v", err)
 	}
 
 	fmt.Println("=== Running ReAct Agent (Streaming) ===")
@@ -74,7 +74,7 @@ func main() {
 	// flowagent.WithComposeOptions(compose.WithCallbacks(&LoggerCallback{})),
 
 	if err != nil {
-		log.Fatalf("Failed to stream: %v", err)
+		logger.Fatalf("Failed to stream: %v", err)
 	}
 	defer stream.Close()
 
@@ -85,7 +85,7 @@ func main() {
 			if err == io.EOF {
 				break
 			}
-			log.Fatalf("Failed to receive chunk: %v", err)
+			logger.Fatalf("Failed to receive chunk: %v", err)
 		}
 
 		if chunk.ReasoningContent != "" {
@@ -129,12 +129,12 @@ func getMCPTools(ctx context.Context) []tool.BaseTool {
 
 	cli, err := client.NewStreamableHttpClient(mcpURL)
 	if err != nil {
-		log.Fatalf("Failed to create MCP client: %v", err)
+		logger.Fatalf("Failed to create MCP client: %v", err)
 	}
 
 	err = cli.Start(ctx)
 	if err != nil {
-		log.Fatalf("Failed to start MCP client (check if server is running at %s): %v", mcpURL, err)
+		logger.Fatalf("Failed to start MCP client (check if server is running at %s): %v", mcpURL, err)
 	}
 
 	initRequest := mcp.InitializeRequest{}
@@ -146,12 +146,12 @@ func getMCPTools(ctx context.Context) []tool.BaseTool {
 
 	_, err = cli.Initialize(ctx, initRequest)
 	if err != nil {
-		log.Fatalf("Failed to initialize MCP client: %v", err)
+		logger.Fatalf("Failed to initialize MCP client: %v", err)
 	}
 
 	tools, err := mcpp.GetTools(ctx, &mcpp.Config{Cli: cli})
 	if err != nil {
-		log.Fatalf("Failed to get MCP tools: %v", err)
+		logger.Fatalf("Failed to get MCP tools: %v", err)
 	}
 
 	return tools

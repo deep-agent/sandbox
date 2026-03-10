@@ -23,11 +23,15 @@ func NewSwaggerHandler() *SwaggerHandler {
 func (h *SwaggerHandler) SwaggerUI(ctx context.Context, c *app.RequestContext) {
 	c.SetContentType("text/html; charset=utf-8")
 	c.SetStatusCode(http.StatusOK)
-	c.Write(swaggerUIHTML)
+	if _, err := c.Write(swaggerUIHTML); err != nil {
+		c.SetStatusCode(http.StatusInternalServerError)
+	}
 }
 
 func (h *SwaggerHandler) OpenAPISpec(ctx context.Context, c *app.RequestContext) {
 	c.SetContentType("application/json")
 	c.SetStatusCode(http.StatusOK)
-	c.Write(openapiJSON)
+	if _, err := c.Write(openapiJSON); err != nil {
+		c.SetStatusCode(http.StatusInternalServerError)
+	}
 }

@@ -30,7 +30,7 @@ func TestNewFetcher(t *testing.T) {
 func TestFetcher_HTTPSchemeUpgrade(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("test content"))
+		_, _ = w.Write([]byte("test content"))
 	}))
 	defer server.Close()
 
@@ -54,7 +54,7 @@ func TestFetcher_Cache(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("cached content"))
+		_, _ = w.Write([]byte("cached content"))
 	}))
 	defer server.Close()
 
@@ -82,7 +82,7 @@ func TestFetcher_CacheExpiration(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("content"))
+		_, _ = w.Write([]byte("content"))
 	}))
 	defer server.Close()
 
@@ -114,7 +114,7 @@ func TestFetcher_CacheMaxSizeEviction(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte(r.URL.Path))
+		_, _ = w.Write([]byte(r.URL.Path))
 	}))
 	defer server.Close()
 
@@ -175,13 +175,13 @@ func TestFetcher_CacheMaxBytesEviction(t *testing.T) {
 		w.Header().Set("Content-Type", "text/plain")
 		switch r.URL.Path {
 		case "/a":
-			w.Write([]byte("aaaaaa"))
+			_, _ = w.Write([]byte("aaaaaa"))
 		case "/b":
-			w.Write([]byte("bbbbbb"))
+			_, _ = w.Write([]byte("bbbbbb"))
 		case "/big":
-			w.Write([]byte("xxxxxxxxxxxxxxxxxxxx"))
+			_, _ = w.Write([]byte("xxxxxxxxxxxxxxxxxxxx"))
 		default:
-			w.Write([]byte("ok"))
+			_, _ = w.Write([]byte("ok"))
 		}
 	}))
 	defer server.Close()
@@ -247,7 +247,7 @@ func TestFetcher_CacheMaxBytesEviction(t *testing.T) {
 func TestFetcher_FetchHTML(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("<html><body><h1>Hello</h1><p>World</p></body></html>"))
+		_, _ = w.Write([]byte("<html><body><h1>Hello</h1><p>World</p></body></html>"))
 	}))
 	defer server.Close()
 
@@ -268,7 +268,7 @@ func TestFetcher_FetchHTML(t *testing.T) {
 func TestFetcher_FetchPlainText(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("plain text content"))
+		_, _ = w.Write([]byte("plain text content"))
 	}))
 	defer server.Close()
 
@@ -315,7 +315,7 @@ func TestFetcher_InvalidURL(t *testing.T) {
 func TestFetcher_Redirect(t *testing.T) {
 	targetServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("redirected content"))
+		_, _ = w.Write([]byte("redirected content"))
 	}))
 	defer targetServer.Close()
 
@@ -341,7 +341,7 @@ func TestFetcher_Redirect(t *testing.T) {
 func TestFetcher_ContextCancellation(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(100 * time.Millisecond)
-		w.Write([]byte("delayed"))
+		_, _ = w.Write([]byte("delayed"))
 	}))
 	defer server.Close()
 

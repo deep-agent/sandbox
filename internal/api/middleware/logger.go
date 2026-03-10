@@ -2,10 +2,10 @@ package middleware
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/deep-agent/sandbox/pkg/logger"
 	"github.com/deep-agent/sandbox/types/consts"
 )
 
@@ -41,9 +41,9 @@ func Logger() app.HandlerFunc {
 			format += "\nresp_body=%s"
 			args = append(args, truncate(string(respBody), 1024))
 		}
-		log.Println("================================")
-		log.Printf(format, args...)
-		log.Println("================================")
+		logger.Println("================================")
+		logger.Printf(format, args...)
+		logger.Println("================================")
 	}
 }
 
@@ -51,5 +51,10 @@ func truncate(s string, maxLen int) string {
 	if len(s) <= maxLen {
 		return s
 	}
-	return s[:maxLen] + "...(truncated)"
+	// Truncate at rune boundary to avoid splitting multi-byte UTF-8 characters.
+	truncated := []rune(s)
+	if len(truncated) <= maxLen {
+		return s
+	}
+	return string(truncated[:maxLen]) + "...(truncated)"
 }

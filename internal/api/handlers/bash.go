@@ -126,8 +126,13 @@ func (h *BashHandler) ExecCommandStream(ctx context.Context, c *app.RequestConte
 	c.Response.Header.Set("X-Accel-Buffering", "no")
 
 	sendEvent := func(event string, data interface{}) {
-		jsonData, _ := json.Marshal(StreamEvent{Event: event, Data: data})
-		c.Write([]byte(fmt.Sprintf("data: %s\n\n", jsonData)))
+		jsonData, err := json.Marshal(StreamEvent{Event: event, Data: data})
+		if err != nil {
+			return
+		}
+		if _, err := c.Write([]byte(fmt.Sprintf("data: %s\n\n", jsonData))); err != nil {
+			return
+		}
 		c.Flush()
 	}
 

@@ -199,7 +199,9 @@ func TestGlobTool_Handler_SortByModTime(t *testing.T) {
 		t.Fatalf("failed to create old file: %v", err)
 	}
 	oldTime := time.Now().Add(-1 * time.Hour)
-	os.Chtimes(oldFile, oldTime, oldTime)
+	if err := os.Chtimes(oldFile, oldTime, oldTime); err != nil {
+		t.Fatalf("failed to set old file times: %v", err)
+	}
 
 	time.Sleep(10 * time.Millisecond)
 

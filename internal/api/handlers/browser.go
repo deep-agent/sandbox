@@ -59,7 +59,13 @@ func (h *BrowserHandler) Navigate(ctx context.Context, c *app.RequestContext) {
 
 func (h *BrowserHandler) Screenshot(ctx context.Context, c *app.RequestContext) {
 	var req model.BrowserScreenshotRequest
-	c.BindAndValidate(&req)
+	if err := c.BindAndValidate(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.Response{
+			Code:    400,
+			Message: "invalid request: " + err.Error(),
+		})
+		return
+	}
 
 	opts := &browser.ScreenshotOptions{
 		Format:  req.Format,

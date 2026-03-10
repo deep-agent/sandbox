@@ -94,7 +94,7 @@ func TestGetContext(t *testing.T) {
 				"arch":      "amd64",
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -125,7 +125,9 @@ func TestBashExec(t *testing.T) {
 		}
 
 		var req model.BashExecRequest
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
 
 		if req.Command != "echo hello" {
 			t.Errorf("expected command 'echo hello', got %s", req.Command)
@@ -138,7 +140,7 @@ func TestBashExec(t *testing.T) {
 				"exit_code": 0,
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -166,7 +168,9 @@ func TestFileRead(t *testing.T) {
 		}
 
 		var req model.FileReadRequest
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
 
 		if req.File != "/tmp/test.txt" {
 			t.Errorf("expected file /tmp/test.txt, got %s", req.File)
@@ -178,7 +182,7 @@ func TestFileRead(t *testing.T) {
 				"content": "file content",
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -202,7 +206,9 @@ func TestFileWrite(t *testing.T) {
 		}
 
 		var req model.FileWriteRequest
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
 
 		if req.File != "/tmp/test.txt" {
 			t.Errorf("expected file /tmp/test.txt, got %s", req.File)
@@ -214,7 +220,7 @@ func TestFileWrite(t *testing.T) {
 		resp := map[string]interface{}{
 			"code": 0,
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -243,7 +249,7 @@ func TestFileList(t *testing.T) {
 				},
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -267,7 +273,7 @@ func TestFileDelete(t *testing.T) {
 		}
 
 		resp := map[string]interface{}{"code": 0}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -285,14 +291,16 @@ func TestFileMove(t *testing.T) {
 		}
 
 		var req model.FileMoveRequest
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
 
 		if req.Source != "/tmp/old.txt" || req.Destination != "/tmp/new.txt" {
 			t.Errorf("unexpected source/destination")
 		}
 
 		resp := map[string]interface{}{"code": 0}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -313,7 +321,7 @@ func TestFileCopy(t *testing.T) {
 		}
 
 		resp := map[string]interface{}{"code": 0}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -334,7 +342,7 @@ func TestMkDir(t *testing.T) {
 		}
 
 		resp := map[string]interface{}{"code": 0}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -357,7 +365,7 @@ func TestFileExists(t *testing.T) {
 				"exists": true,
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -379,7 +387,9 @@ func TestGrepSearch(t *testing.T) {
 		}
 
 		var req model.GrepRequest
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
 
 		if req.Pattern != "test" {
 			t.Errorf("expected pattern 'test', got %s", req.Pattern)
@@ -392,7 +402,7 @@ func TestGrepSearch(t *testing.T) {
 				"truncated": false,
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -424,7 +434,7 @@ func TestBrowserGetInfo(t *testing.T) {
 				"status":        "connected",
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -446,14 +456,16 @@ func TestBrowserNavigate(t *testing.T) {
 		}
 
 		var req model.BrowserNavigateRequest
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
 
 		if req.URL != "https://example.com" {
 			t.Errorf("expected URL 'https://example.com', got %s", req.URL)
 		}
 
 		resp := map[string]interface{}{"code": 0}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -478,7 +490,7 @@ func TestBrowserScreenshot(t *testing.T) {
 				"screenshot": "base64encodedimage",
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -498,7 +510,7 @@ func TestBrowserScreenshot(t *testing.T) {
 func TestBrowserClick(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := map[string]interface{}{"code": 0}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -512,7 +524,7 @@ func TestBrowserClick(t *testing.T) {
 func TestBrowserType(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := map[string]interface{}{"code": 0}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -534,7 +546,7 @@ func TestBrowserEvaluate(t *testing.T) {
 				"result": "evaluated result",
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -554,7 +566,7 @@ func TestBrowserEvaluate(t *testing.T) {
 func TestBrowserScroll(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := map[string]interface{}{"code": 0}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -573,7 +585,7 @@ func TestBrowserGetHTML(t *testing.T) {
 				"html": "<div>content</div>",
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -591,7 +603,7 @@ func TestBrowserGetHTML(t *testing.T) {
 func TestBrowserWaitVisible(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := map[string]interface{}{"code": 0}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -610,7 +622,7 @@ func TestBrowserGetCurrentURL(t *testing.T) {
 				"url": "https://example.com/page",
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -633,7 +645,7 @@ func TestBrowserGetTitle(t *testing.T) {
 				"title": "Page Title",
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -659,7 +671,7 @@ func TestBrowserGetPageInfo(t *testing.T) {
 				"height": 1080,
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -685,7 +697,7 @@ func TestBrowserPDF(t *testing.T) {
 				"pdf": "base64pdfdata",
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -706,7 +718,7 @@ func TestAPIError(t *testing.T) {
 			"code":    1,
 			"message": "something went wrong",
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -735,10 +747,12 @@ func TestAuthorizationHeader(t *testing.T) {
 			"code": 0,
 			"data": map[string]interface{}{},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
 	client := NewClient(server.URL, "test-session", WithSecret("test-secret"))
-	_, _ = client.GetContext()
+	if _, err := client.GetContext(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 }
