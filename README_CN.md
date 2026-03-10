@@ -360,7 +360,7 @@ export JWT_AUTH_REQUIRED="true"            # 可选，强制鉴权
 | 变量 | 默认值 | 描述 |
 |------|--------|------|
 | `HOST_PORT` | 8080 | 宿主机映射到容器 8080 的端口 |
-| `LOCAL_WORKSPACE` | ./docker/volumes/workspace | 挂载到 `/home/sandbox/workspace` 的宿主机路径 |
+| `LOCAL_MEMORY` | ./docker/volumes | 持久化存储基础路径；其 `workspace` 子目录挂载到 `/home/sandbox/workspace` |
 | `LOCAL_SUPERVISOR_CONF` | ./docker/volumes/app.supervisor.d | 挂载到 `/home/sandbox/app.supervisor.d` 的宿主机路径 |
 | `LOCAL_USERDATA` | ./docker/volumes/userdata | 挂载到 `/home/sandbox/userdata` 的宿主机路径 |
 | `LOCAL_INIT_SCRIPTS` | ./docker/volumes/init.d | 挂载到 `/docker-entrypoint.d` 的宿主机路径 |
@@ -487,7 +487,7 @@ USER sandbox
 通过 docker-compose 或环境变量自定义挂载路径：
 
 ```bash
-LOCAL_WORKSPACE=/path/to/workspace \
+LOCAL_MEMORY=/path/to/memory \
 LOCAL_SUPERVISOR_CONF=/path/to/app.supervisor.d \
 LOCAL_USERDATA=/path/to/userdata \
 LOCAL_INIT_SCRIPTS=/path/to/init.d \

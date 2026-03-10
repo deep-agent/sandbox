@@ -31,7 +31,7 @@ services:
       ENABLE_VNC: ${ENABLE_VNC:-true}
       APP_SERVICE_PORT: ${APP_SERVICE_PORT:-9000}
     volumes:
-      - ${LOCAL_WORKSPACE:-./docker/volumes/workspace}:/home/sandbox/workspace
+      - ${LOCAL_MEMORY:-./docker/volumes}/workspace:/home/sandbox/workspace
       - ${LOCAL_SUPERVISOR_CONF:-./docker/volumes/app.supervisor.d}:/home/sandbox/app.supervisor.d
       - ${LOCAL_USERDATA:-./docker/volumes/userdata}:/home/sandbox/userdata
       - ${LOCAL_INIT_SCRIPTS:-./docker/volumes/init.d}:/docker-entrypoint.d:ro

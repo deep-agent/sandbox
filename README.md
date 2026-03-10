@@ -320,7 +320,7 @@ These variables are consumed by `docker-compose` on the host side.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `HOST_PORT` | 8080 | Host port mapped to container port 8080 |
-| `LOCAL_WORKSPACE` | ./docker/volumes/workspace | Host path mounted to `/home/sandbox/workspace` |
+| `LOCAL_MEMORY` | ./docker/volumes | Host base path for persistent storage; `workspace` subdirectory is mounted to `/home/sandbox/workspace` |
 | `LOCAL_SUPERVISOR_CONF` | ./docker/volumes/app.supervisor.d | Host path mounted to `/home/sandbox/app.supervisor.d` |
 | `LOCAL_USERDATA` | ./docker/volumes/userdata | Host path mounted to `/home/sandbox/userdata` |
 | `LOCAL_INIT_SCRIPTS` | ./docker/volumes/init.d | Host path mounted to `/docker-entrypoint.d` |
@@ -447,7 +447,7 @@ USER sandbox
 Customize mount paths via docker-compose or environment variables:
 
 ```bash
-LOCAL_WORKSPACE=/path/to/workspace \
+LOCAL_MEMORY=/path/to/memory \
 LOCAL_SUPERVISOR_CONF=/path/to/app.supervisor.d \
 LOCAL_USERDATA=/path/to/userdata \
 LOCAL_INIT_SCRIPTS=/path/to/init.d \

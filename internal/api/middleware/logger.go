@@ -18,7 +18,16 @@ func Logger() app.HandlerFunc {
 		body := c.Request.Body()
 		sessionID := string(c.Request.Header.Peek(consts.HeaderSessionID))
 
-		log.Printf("[REQ][SessionID:%s] %s %s query=%s body=%s", sessionID, method, path, query, truncate(string(body), 1024))
+		format := "[HTTP] sid=%s method=%s path=%s"
+		args := []any{sessionID, method, path}
+		if query != "" {
+			format += " query=%q"
+			args = append(args, query)
+		}
+		if len(body) > 0 {
+			format += "\nreq_body=%s"
+			args = append(args, truncate(string(body), 1024))
+		}
 
 		c.Next(ctx)
 
@@ -26,8 +35,15 @@ func Logger() app.HandlerFunc {
 		status := c.Response.StatusCode()
 		respBody := c.Response.Body()
 
-		log.Printf("[RESP][SessionID:%s] %s %s status=%d latency=%v body=%s", sessionID, method, path, status, latency, truncate(string(respBody), 1024))
-		log.Printf("================================\n")
+		format += " status=%d latency=%v"
+		args = append(args, status, latency)
+		if len(respBody) > 0 {
+			format += "\nresp_body=%s"
+			args = append(args, truncate(string(respBody), 1024))
+		}
+		log.Println("================================")
+		log.Printf(format, args...)
+		log.Println("================================")
 	}
 }
 
