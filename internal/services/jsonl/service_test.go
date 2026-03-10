@@ -192,7 +192,7 @@ func TestAppendLineNewFile(t *testing.T) {
 	s := NewService()
 	filePath := filepath.Join(t.TempDir(), "new.jsonl")
 
-	if err := s.AppendLine(filePath, `{"id":1}`); err != nil {
+	if err := s.AppendLine(filePath, []string{`{"id":1}`}); err != nil {
 		t.Fatalf("AppendLine() error = %v", err)
 	}
 
@@ -207,7 +207,7 @@ func TestAppendLineExistingFile(t *testing.T) {
 	lines := []string{`{"id":1}`}
 	filePath := createTestFile(t, lines)
 
-	if err := s.AppendLine(filePath, `{"id":2}`); err != nil {
+	if err := s.AppendLine(filePath, []string{`{"id":2}`}); err != nil {
 		t.Fatalf("AppendLine() error = %v", err)
 	}
 
@@ -236,7 +236,21 @@ func TestAppendLineFileWithTrailingNewline(t *testing.T) {
 		t.Fatalf("failed to create file: %v", err)
 	}
 
-	if err := s.AppendLine(filePath, `{"id":2}`); err != nil {
+	if err := s.AppendLine(filePath, []string{`{"id":2}`}); err != nil {
+		t.Fatalf("AppendLine() error = %v", err)
+	}
+
+	content, _ := os.ReadFile(filePath)
+	if string(content) != "{\"id\":1}\n{\"id\":2}\n" {
+		t.Errorf("file content = %q, want %q", string(content), "{\"id\":1}\n{\"id\":2}\n")
+	}
+}
+
+func TestAppendLineBatch(t *testing.T) {
+	s := NewService()
+	filePath := filepath.Join(t.TempDir(), "batch.jsonl")
+
+	if err := s.AppendLine(filePath, []string{`{"id":1}`, `{"id":2}`}); err != nil {
 		t.Fatalf("AppendLine() error = %v", err)
 	}
 
@@ -252,7 +266,7 @@ func TestAppendLineMultiple(t *testing.T) {
 
 	for i := 1; i <= 3; i++ {
 		line := fmt.Sprintf(`{"id":%d}`, i)
-		if err := s.AppendLine(filePath, line); err != nil {
+		if err := s.AppendLine(filePath, []string{line}); err != nil {
 			t.Fatalf("AppendLine() error = %v", err)
 		}
 	}

@@ -2,7 +2,9 @@ package jsonl
 
 import (
 	"bufio"
+	"fmt"
 	"os"
+	"strings"
 )
 
 const maxScanBufferSize = 10 * 1024 * 1024 // 10MB
@@ -69,7 +71,13 @@ func (s *Service) ReadLines(file string, startLine int, count *int) ([]string, e
 	return lines, nil
 }
 
-func (s *Service) AppendLine(file, jsonString string) error {
+func (s *Service) AppendLine(file string, jsonStrings []string) error {
+	for i, s := range jsonStrings {
+		if strings.TrimSpace(s) == "" {
+			return fmt.Errorf("json_string[%d] is empty", i)
+		}
+	}
+
 	// Check if existing file needs a leading newline
 	info, err := os.Stat(file)
 	if err == nil && info.Size() > 0 {
@@ -102,6 +110,18 @@ func (s *Service) AppendLine(file, jsonString string) error {
 	}
 	defer f.Close()
 
-	_, err = f.WriteString(jsonString + "\n")
-	return err
+	w := bufio.NewWriter(f)
+	for _, s := range jsonStrings {
+		if strings.HasSuffix(s, "\n") {
+			if _, err := w.WriteString(s); err != nil {
+				return err
+			}
+			continue
+		}
+		if _, err := w.WriteString(s + "\n"); err != nil {
+			return err
+		}
+	}
+
+	return w.Flush()
 }
