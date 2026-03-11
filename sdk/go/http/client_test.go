@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -728,8 +729,58 @@ func TestAPIError(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 
-	if err.Error() != "API error: something went wrong" {
+	if err.Error() != "API error (code 1): something went wrong" {
 		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestAPIErrorNotFound(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := map[string]interface{}{
+			"code":    404,
+			"message": "file not found: /tmp/noexist.txt",
+		}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test-session")
+	_, err := client.FileRead(&model.FileReadRequest{File: "/tmp/noexist.txt"})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("expected os.ErrNotExist, got: %v", err)
+	}
+
+	var apiErr *APIError
+	if !errors.As(err, &apiErr) {
+		t.Fatalf("expected APIError, got: %T", err)
+	}
+	if apiErr.Code != 404 {
+		t.Errorf("expected code 404, got %d", apiErr.Code)
+	}
+}
+
+func TestAPIErrorNonNotFound(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := map[string]interface{}{
+			"code":    500,
+			"message": "internal error",
+		}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test-session")
+	_, err := client.FileRead(&model.FileReadRequest{File: "/tmp/test.txt"})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if errors.Is(err, os.ErrNotExist) {
+		t.Error("should not be os.ErrNotExist for code 500")
 	}
 }
 
