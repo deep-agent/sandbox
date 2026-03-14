@@ -4,6 +4,23 @@
 
 AI Agent Sandbox - 基于 Golang 实现的一体化的 AI Agent 沙箱执行环境
 
+## 快速开始
+
+### Docker 部署
+
+```bash
+make docker-reload
+```
+
+### 访问服务
+
+- **IndexPage**: http://localhost:8080/
+- **API**: http://localhost:8080/v1/
+- **VNC**: http://localhost:8080/vnc/
+- **Terminal**: http://localhost:8080/terminal/
+- **MCP**: http://localhost:8080/mcp
+- **Health**: http://localhost:8080/health
+
 ## 系统架构
 
 ```
@@ -139,34 +156,6 @@ sandbox/
 - 程序 5 是 **Chromium 浏览器**，支持 CDP 协议进行自动化控制
 - 程序 6-7 是 **业务服务**，提供 API 和 MCP 协议
 - 程序 8 是 **网关**，统一对外暴露服务
-
-## 快速开始
-
-
-### Docker 部署
-
-```bash
-# 构建并推送多平台镜像
-make docker-build
-
-# 使用 docker-compose 启动
-docker-compose up -d
-
-# 重建并启动
-make docker-rebuild
-
-# 重新加载 (停止后重启)
-make docker-reload
-```
-
-### 访问服务
-
-- **IndexPage**: http://localhost:8080/
-- **API**: http://localhost:8080/v1/
-- **VNC**: http://localhost:8080/vnc/
-- **Terminal**: http://localhost:8080/terminal/
-- **MCP**: http://localhost:8080/mcp
-- **Health**: http://localhost:8080/health
 
 ## API 端点
 

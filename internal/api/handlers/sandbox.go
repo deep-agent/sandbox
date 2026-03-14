@@ -3,7 +3,9 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/deep-agent/sandbox/internal/config"
@@ -26,6 +28,7 @@ func (h *SandboxHandler) GetContext(ctx context.Context, c *app.RequestContext) 
 		Workspace: cwd,
 		OS:        runtime.GOOS,
 		Arch:      runtime.GOARCH,
+		OSVersion: getOSVersion(),
 	}
 
 	c.JSON(http.StatusOK, model.Response{
@@ -38,4 +41,12 @@ func (h *SandboxHandler) Health(ctx context.Context, c *app.RequestContext) {
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"status": "ok",
 	})
+}
+
+func getOSVersion() string {
+	out, err := exec.Command("uname", "-sr").Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
 }
