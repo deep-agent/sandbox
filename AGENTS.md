@@ -29,7 +29,7 @@ Run a single test:
 - Subtest (if present): `go test ./internal/mcp/tools -run TestReadTool_Handler_SimpleRead/CaseName -v`
 
 Optional Docker workflows:
-- Build image: `make docker-build` (multi-arch)
+- Build image: `make push-to-dockerhub` (multi-arch)
 - Build image (local load): `make docker-build-load`
 - Run image: `make docker-run`
 - Compose up/down: `make docker-compose-up` / `make docker-compose-down`

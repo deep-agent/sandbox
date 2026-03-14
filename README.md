@@ -4,6 +4,23 @@ English | [简体中文](README_CN.md)
 
 AI Agent Sandbox - An sandbox execution environment for AI Agents, built with Golang
 
+## Quick Start
+
+### Docker Deployment
+
+```bash
+make docker-reload
+```
+
+### Access Services
+
+- **IndexPage**: http://localhost:8080/
+- **API**: http://localhost:8080/v1/
+- **VNC**: http://localhost:8080/vnc/
+- **Terminal**: http://localhost:8080/terminal/
+- **MCP**: http://localhost:8080/mcp
+- **Health**: http://localhost:8080/health
+
 ## Architecture
 
 <img alt="cover" src="https://upload-images.jianshu.io/upload_images/12321605-f74f67020c334759.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
@@ -101,33 +118,6 @@ The container manages 8 processes via Supervisord, started in priority order:
 - Program 5 is the **Chromium Browser**, supporting CDP protocol for automation
 - Programs 6-7 are **Business Services**, providing API and MCP protocol
 - Program 8 is the **Gateway**, unified external service exposure
-
-## Quick Start
-
-### Docker Deployment
-
-```bash
-# Build and push multi-platform image
-make docker-build
-
-# Start with docker-compose
-docker-compose up -d
-
-# Rebuild and start
-make docker-rebuild
-
-# Reload (stop and restart)
-make docker-reload
-```
-
-### Access Services
-
-- **IndexPage**: http://localhost:8080/
-- **API**: http://localhost:8080/v1/
-- **VNC**: http://localhost:8080/vnc/
-- **Terminal**: http://localhost:8080/terminal/
-- **MCP**: http://localhost:8080/mcp
-- **Health**: http://localhost:8080/health
 
 ## API Endpoints
 

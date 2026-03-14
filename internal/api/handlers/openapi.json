@@ -1116,6 +1116,10 @@
               "arch": {
                 "type": "string",
                 "example": "amd64"
+              },
+              "os_version": {
+                "type": "string",
+                "example": "Linux 6.8.0-71-generic"
               }
             }
           }

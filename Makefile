@@ -1,4 +1,4 @@
-.PHONY: build build-linux clean run docker-build docker-run test ensure-env
+.PHONY: build build-linux clean run push-to-dockerhub docker-run test ensure-env
 
 BINARY_NAME=sandbox
 IMAGE_NAME=fanlv/sandbox:latest
@@ -46,7 +46,7 @@ run-server:
 run-mcp:
 	$(GO) run ./cmd/mcp-hub
 
-docker-build:
+push-to-dockerhub:
 	docker buildx build --platform linux/amd64,linux/arm64 -t $(IMAGE_NAME) -f docker/Dockerfile --push $(DOCKER_BUILD_ARGS) .
 
 docker-reload: ensure-env

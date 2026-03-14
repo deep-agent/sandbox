@@ -2,7 +2,9 @@ package local
 
 import (
 	"context"
+	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/deep-agent/sandbox/internal/services/bash"
 	"github.com/deep-agent/sandbox/internal/services/browser"
@@ -50,6 +52,7 @@ func NewClient(workDir string, opts ...Option) *Client {
 			Workspace: workDir,
 			OS:        runtime.GOOS,
 			Arch:      runtime.GOARCH,
+			OSVersion: getOSVersion(),
 		},
 	}
 
@@ -58,6 +61,14 @@ func NewClient(workDir string, opts ...Option) *Client {
 	}
 
 	return c
+}
+
+func getOSVersion() string {
+	out, err := exec.Command("uname", "-sr").Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
 }
 
 func (c *Client) GetContext() (*model.SandboxContext, error) {

@@ -139,7 +139,7 @@ func (c *Client) doRequest(method, path string, body interface{}) (*response, er
 	}
 
 	if result.Code != 0 {
-		return nil, fmt.Errorf("API error: %s", result.Message)
+		return nil, newAPIError(result.Code, result.Message)
 	}
 
 	return &result, nil

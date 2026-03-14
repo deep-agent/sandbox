@@ -10,4 +10,5 @@ type SandboxContext struct {
 	Workspace string `json:"workspace"`
 	OS        string `json:"os"`
 	Arch      string `json:"arch"`
+	OSVersion string `json:"os_version"`
 }
