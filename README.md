@@ -9,10 +9,13 @@ AI Agent Sandbox - A sandbox execution environment for AI Agents, built with Gol
 ### Docker Deployment
 
 ```bash
+mkdir /path/to/memory
+mkdir /path/to/memory/workspace
+
 # Set the host path for persistent storage (workspace, prompts, etc.)
-export LOCAL_MEMORY="./docker/volumes"
+export LOCAL_MEMORY="/path/to/memory"
 # On Linux, the container runs as UID 1000 which may differ from the host user, fix directory permissions to avoid Permission Denied
-sudo chown -R 1000:1000 "./docker/volumes"
+sudo chown -R 1000:1000 "/path/to/memory"
 
 make docker-start
 ```
