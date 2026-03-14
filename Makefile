@@ -49,12 +49,23 @@ run-mcp:
 push-to-dockerhub:
 	docker buildx build --platform linux/amd64,linux/arm64 -t $(IMAGE_NAME) -f docker/Dockerfile --push $(DOCKER_BUILD_ARGS) .
 
-docker-reload: ensure-env
+docker-start: ensure-env
+	$(DOCKER_ENV) docker compose up -d
+
+docker-restart: ensure-env
 	$(DOCKER_ENV) docker compose down && $(DOCKER_ENV) docker compose up -d
 
-docker-rebuild: ensure-env
-	$(DOCKER_ENV) docker compose up --build --force-recreate -d
+docker-dev: ensure-env
+	$(DOCKER_ENV) docker compose -f docker-compose.debug.yaml up --build --force-recreate -d
 
+docker-restart-dev: ensure-env
+	$(DOCKER_ENV) docker compose -f docker-compose.debug.yaml down && $(DOCKER_ENV) docker compose -f docker-compose.debug.yaml up -d
+
+docker-down: ensure-env
+	$(DOCKER_ENV) docker compose down
+
+docker-down-dev: ensure-env
+	$(DOCKER_ENV) docker compose -f docker-compose.debug.yaml down
 
 nginx-reload:
 	docker exec sandbox nginx -s reload

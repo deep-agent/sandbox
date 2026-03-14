@@ -2,14 +2,17 @@
 
 English | [简体中文](README_CN.md)
 
-AI Agent Sandbox - An sandbox execution environment for AI Agents, built with Golang
+AI Agent Sandbox - A sandbox execution environment for AI Agents, built with Golang
 
 ## Quick Start
 
 ### Docker Deployment
 
 ```bash
-make docker-reload
+# Set the host path for persistent storage (workspace, prompts, etc.)
+export LOCAL_MEMORY="./docker/volumes"
+
+make docker-start
 ```
 
 ### Access Services
