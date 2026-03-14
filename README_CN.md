@@ -11,6 +11,8 @@ AI Agent Sandbox - 基于 Golang 实现的一体化的 AI Agent 沙箱执行环�
 ```bash
 # 设置主机路径，用于持久化存储（工作目录、提示词等）
 export LOCAL_MEMORY="./docker/volumes"
+# Linux 下 Docker 容器用户（UID 1000）与宿主机用户不同，需修改目录权限以避免 Permission Denied
+sudo chown -R 1000:1000 "./docker/volumes"
 
 make docker-start
 ```
