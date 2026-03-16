@@ -9,12 +9,17 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
+// --- browser_navigate ---
+
 func BrowserNavigateToolDef() mcp.Tool {
 	return mcp.NewTool("browser_navigate",
-		mcp.WithDescription("Navigate the browser to a specified URL. Use this to open web pages for browsing, testing, or scraping."),
+		mcp.WithDescription("Navigate the browser to a specified URL."),
 		mcp.WithString("url",
 			mcp.Required(),
-			mcp.Description("The URL to navigate to (e.g., 'https://example.com')"),
+			mcp.Description("The URL to navigate to"),
+		),
+		mcp.WithBoolean("new_tab",
+			mcp.Description("Whether to open in a new tab. Default: false"),
 		),
 	)
 }
@@ -26,76 +31,79 @@ func BrowserNavigateHandler(cdpURL string) func(ctx context.Context, request mcp
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 
+		newTab := request.GetBool("new_tab", false)
+
 		controller := browser.NewController(cdpURL)
+		if newTab {
+			if err := controller.NavigateNewTab(url); err != nil {
+				return mcp.NewToolResultError("Error: " + err.Error()), nil
+			}
+			return mcp.NewToolResultText(fmt.Sprintf("Opened new tab with URL: %s", url)), nil
+		}
+
 		if err := controller.Navigate(url); err != nil {
 			return mcp.NewToolResultError("Error: " + err.Error()), nil
 		}
-
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully navigated to: %s", url)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Navigated to: %s", url)), nil
 	}
 }
 
-func BrowserScreenshotToolDef() mcp.Tool {
-	return mcp.NewTool("browser_screenshot",
-		mcp.WithDescription("Capture a screenshot of the current browser page. Returns the screenshot as a base64-encoded PNG image."),
-		mcp.WithBoolean("full_page",
-			mcp.Description("If true, capture the full scrollable page. If false, capture only the visible viewport. Default: false"),
-		),
-	)
-}
-
-func BrowserScreenshotHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		fullPage := request.GetBool("full_page", false)
-
-		controller := browser.NewController(cdpURL)
-		screenshot, err := controller.Screenshot(&browser.ScreenshotOptions{
-			Full: fullPage,
-		})
-		if err != nil {
-			return mcp.NewToolResultError("Error: " + err.Error()), nil
-		}
-
-		return mcp.NewToolResultText(screenshot), nil
-	}
-}
+// --- browser_click ---
 
 func BrowserClickToolDef() mcp.Tool {
 	return mcp.NewTool("browser_click",
-		mcp.WithDescription("Click on an element in the browser page using a CSS selector. The element must be visible."),
+		mcp.WithDescription("Click an element by CSS selector or at specific viewport coordinates. Use selector for CSS-based clicking, or coordinate_x/coordinate_y for pixel-precise clicking."),
 		mcp.WithString("selector",
-			mcp.Required(),
-			mcp.Description("CSS selector for the element to click (e.g., '#submit-button', '.nav-link', 'button[type=submit]')"),
+			mcp.Description("CSS selector for the element to click. Use this OR coordinates."),
+		),
+		mcp.WithNumber("coordinate_x",
+			mcp.Description("X coordinate (pixels from left edge of viewport). Use with coordinate_y."),
+		),
+		mcp.WithNumber("coordinate_y",
+			mcp.Description("Y coordinate (pixels from top edge of viewport). Use with coordinate_x."),
 		),
 	)
 }
 
 func BrowserClickHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		selector, err := request.RequireString("selector")
-		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+		controller := browser.NewController(cdpURL)
+
+		// Check for coordinate-based clicking
+		coordX := request.GetFloat("coordinate_x", -1)
+		coordY := request.GetFloat("coordinate_y", -1)
+		if coordX >= 0 && coordY >= 0 {
+			if err := controller.ClickCoordinate(int(coordX), int(coordY)); err != nil {
+				return mcp.NewToolResultError("Error: " + err.Error()), nil
+			}
+			return mcp.NewToolResultText(fmt.Sprintf("Clicked at coordinates (%d, %d)", int(coordX), int(coordY))), nil
 		}
 
-		controller := browser.NewController(cdpURL)
+		// Fall back to selector-based clicking
+		selector, err := request.RequireString("selector")
+		if err != nil {
+			return mcp.NewToolResultError("Provide either selector or both coordinate_x and coordinate_y"), nil
+		}
+
 		if err := controller.Click(selector); err != nil {
 			return mcp.NewToolResultError("Error: " + err.Error()), nil
 		}
-
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully clicked element: %s", selector)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Clicked element: %s", selector)), nil
 	}
 }
 
+// --- browser_type ---
+
 func BrowserTypeToolDef() mcp.Tool {
 	return mcp.NewTool("browser_type",
-		mcp.WithDescription("Type text into an input element in the browser. First clicks the element, then types the text."),
+		mcp.WithDescription("Type text into an input element in the browser."),
 		mcp.WithString("selector",
 			mcp.Required(),
-			mcp.Description("CSS selector for the input element (e.g., '#search-input', 'input[name=email]')"),
+			mcp.Description("CSS selector for the input element"),
 		),
 		mcp.WithString("text",
 			mcp.Required(),
-			mcp.Description("The text to type into the element"),
+			mcp.Description("The text to type"),
 		),
 	)
 }
@@ -117,61 +125,52 @@ func BrowserTypeHandler(cdpURL string) func(ctx context.Context, request mcp.Cal
 			return mcp.NewToolResultError("Error: " + err.Error()), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully typed text into: %s", selector)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Typed '%s' into element: %s", text, selector)), nil
 	}
 }
 
-func BrowserGetURLToolDef() mcp.Tool {
-	return mcp.NewTool("browser_get_url",
-		mcp.WithDescription("Get the current URL of the browser page."),
+// --- browser_get_state ---
+
+func BrowserGetStateToolDef() mcp.Tool {
+	return mcp.NewTool("browser_get_state",
+		mcp.WithDescription("Get the current state of the page including URL, title, tabs, and all interactive elements."),
+		mcp.WithBoolean("include_screenshot",
+			mcp.Description("Whether to include a screenshot of the current page. Default: false"),
+		),
 	)
 }
 
-func BrowserGetURLHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func BrowserGetStateHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		includeScreenshot := request.GetBool("include_screenshot", false)
+
 		controller := browser.NewController(cdpURL)
-		url, err := controller.GetCurrentURL()
+		state, err := controller.GetState(includeScreenshot)
 		if err != nil {
 			return mcp.NewToolResultError("Error: " + err.Error()), nil
 		}
 
-		return mcp.NewToolResultText(url), nil
+		output, _ := json.Marshal(state)
+		return mcp.NewToolResultText(string(output)), nil
 	}
 }
 
-func BrowserGetTitleToolDef() mcp.Tool {
-	return mcp.NewTool("browser_get_title",
-		mcp.WithDescription("Get the title of the current browser page."),
-	)
-}
-
-func BrowserGetTitleHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		controller := browser.NewController(cdpURL)
-		title, err := controller.GetTitle()
-		if err != nil {
-			return mcp.NewToolResultError("Error: " + err.Error()), nil
-		}
-
-		return mcp.NewToolResultText(title), nil
-	}
-}
+// --- browser_get_html ---
 
 func BrowserGetHTMLToolDef() mcp.Tool {
 	return mcp.NewTool("browser_get_html",
-		mcp.WithDescription("Get the outer HTML of an element matching the CSS selector."),
+		mcp.WithDescription("Get the raw HTML of the current page or a specific element by CSS selector."),
 		mcp.WithString("selector",
-			mcp.Required(),
-			mcp.Description("CSS selector for the element (e.g., '#content', 'body', '.main-content')"),
+			mcp.Description("Optional CSS selector to get HTML of a specific element. If omitted, returns full page HTML."),
 		),
 	)
 }
 
 func BrowserGetHTMLHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		selector, err := request.RequireString("selector")
-		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+		selector := request.GetString("selector", "")
+		if selector == "" {
+			selector = "html"
 		}
 
 		controller := browser.NewController(cdpURL)
@@ -188,12 +187,162 @@ func BrowserGetHTMLHandler(cdpURL string) func(ctx context.Context, request mcp.
 	}
 }
 
+// --- browser_screenshot ---
+
+func BrowserScreenshotToolDef() mcp.Tool {
+	return mcp.NewTool("browser_screenshot",
+		mcp.WithDescription("Take a screenshot of the current page. Returns the screenshot as a base64-encoded PNG image."),
+		mcp.WithBoolean("full_page",
+			mcp.Description("Whether to capture the full scrollable page or just the visible viewport. Default: false"),
+		),
+	)
+}
+
+func BrowserScreenshotHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		fullPage := request.GetBool("full_page", false)
+
+		controller := browser.NewController(cdpURL)
+		screenshot, err := controller.Screenshot(&browser.ScreenshotOptions{
+			Full: fullPage,
+		})
+		if err != nil {
+			return mcp.NewToolResultError("Error: " + err.Error()), nil
+		}
+
+		return mcp.NewToolResultText(screenshot), nil
+	}
+}
+
+// --- browser_scroll ---
+
+func BrowserScrollToolDef() mcp.Tool {
+	return mcp.NewTool("browser_scroll",
+		mcp.WithDescription("Scroll the page up or down."),
+		mcp.WithString("direction",
+			mcp.Description("Direction to scroll: 'up' or 'down'. Default: 'down'"),
+			mcp.Enum("up", "down"),
+		),
+	)
+}
+
+func BrowserScrollHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		direction := request.GetString("direction", "down")
+
+		controller := browser.NewController(cdpURL)
+		if err := controller.ScrollByDirection(direction); err != nil {
+			return mcp.NewToolResultError("Error: " + err.Error()), nil
+		}
+
+		return mcp.NewToolResultText(fmt.Sprintf("Scrolled %s", direction)), nil
+	}
+}
+
+// --- browser_go_back ---
+
+func BrowserGoBackToolDef() mcp.Tool {
+	return mcp.NewTool("browser_go_back",
+		mcp.WithDescription("Go back to the previous page in browser history."),
+	)
+}
+
+func BrowserGoBackHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		controller := browser.NewController(cdpURL)
+		if err := controller.GoBack(); err != nil {
+			return mcp.NewToolResultError("Error: " + err.Error()), nil
+		}
+
+		return mcp.NewToolResultText("Navigated back"), nil
+	}
+}
+
+// --- browser_list_tabs ---
+
+func BrowserListTabsToolDef() mcp.Tool {
+	return mcp.NewTool("browser_list_tabs",
+		mcp.WithDescription("List all open browser tabs."),
+	)
+}
+
+func BrowserListTabsHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		controller := browser.NewController(cdpURL)
+		tabs, err := controller.ListTabs()
+		if err != nil {
+			return mcp.NewToolResultError("Error: " + err.Error()), nil
+		}
+
+		output, _ := json.Marshal(tabs)
+		return mcp.NewToolResultText(string(output)), nil
+	}
+}
+
+// --- browser_switch_tab ---
+
+func BrowserSwitchTabToolDef() mcp.Tool {
+	return mcp.NewTool("browser_switch_tab",
+		mcp.WithDescription("Switch to a different browser tab."),
+		mcp.WithString("tab_id",
+			mcp.Required(),
+			mcp.Description("The tab ID to switch to (last 4 characters of target ID, from browser_list_tabs)"),
+		),
+	)
+}
+
+func BrowserSwitchTabHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		tabID, err := request.RequireString("tab_id")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+
+		controller := browser.NewController(cdpURL)
+		if err := controller.SwitchTab(tabID); err != nil {
+			return mcp.NewToolResultError("Error: " + err.Error()), nil
+		}
+
+		return mcp.NewToolResultText(fmt.Sprintf("Switched to tab: %s", tabID)), nil
+	}
+}
+
+// --- browser_close_tab ---
+
+func BrowserCloseTabToolDef() mcp.Tool {
+	return mcp.NewTool("browser_close_tab",
+		mcp.WithDescription("Close a browser tab."),
+		mcp.WithString("tab_id",
+			mcp.Required(),
+			mcp.Description("The tab ID to close (last 4 characters of target ID, from browser_list_tabs)"),
+		),
+	)
+}
+
+func BrowserCloseTabHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		tabID, err := request.RequireString("tab_id")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+
+		controller := browser.NewController(cdpURL)
+		if err := controller.CloseTab(tabID); err != nil {
+			return mcp.NewToolResultError("Error: " + err.Error()), nil
+		}
+
+		return mcp.NewToolResultText(fmt.Sprintf("Closed tab: %s", tabID)), nil
+	}
+}
+
+// --- browser_evaluate (Go-specific, kept) ---
+
 func BrowserEvaluateToolDef() mcp.Tool {
 	return mcp.NewTool("browser_evaluate",
-		mcp.WithDescription("Execute JavaScript code in the browser and return the result. Use this for custom DOM manipulation or data extraction."),
+		mcp.WithDescription("Execute JavaScript code in the browser and return the result."),
 		mcp.WithString("expression",
 			mcp.Required(),
-			mcp.Description("JavaScript expression to evaluate (e.g., 'document.querySelectorAll(\"a\").length')"),
+			mcp.Description("JavaScript expression to evaluate"),
 		),
 	)
 }
@@ -216,36 +365,11 @@ func BrowserEvaluateHandler(cdpURL string) func(ctx context.Context, request mcp
 	}
 }
 
-func BrowserScrollToolDef() mcp.Tool {
-	return mcp.NewTool("browser_scroll",
-		mcp.WithDescription("Scroll the browser page to a specific position."),
-		mcp.WithNumber("x",
-			mcp.Description("Horizontal scroll position in pixels. Default: 0"),
-		),
-		mcp.WithNumber("y",
-			mcp.Required(),
-			mcp.Description("Vertical scroll position in pixels"),
-		),
-	)
-}
-
-func BrowserScrollHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		x := int64(request.GetFloat("x", 0))
-		y := int64(request.GetFloat("y", 0))
-
-		controller := browser.NewController(cdpURL)
-		if err := controller.Scroll(x, y); err != nil {
-			return mcp.NewToolResultError("Error: " + err.Error()), nil
-		}
-
-		return mcp.NewToolResultText(fmt.Sprintf("Scrolled to position: (%d, %d)", x, y)), nil
-	}
-}
+// --- browser_wait_visible (Go-specific, kept) ---
 
 func BrowserWaitVisibleToolDef() mcp.Tool {
 	return mcp.NewTool("browser_wait_visible",
-		mcp.WithDescription("Wait for an element to become visible on the page. Useful after navigation or dynamic content loading."),
+		mcp.WithDescription("Wait for an element to become visible on the page."),
 		mcp.WithString("selector",
 			mcp.Required(),
 			mcp.Description("CSS selector for the element to wait for"),
@@ -269,24 +393,7 @@ func BrowserWaitVisibleHandler(cdpURL string) func(ctx context.Context, request 
 	}
 }
 
-func BrowserGetPageInfoToolDef() mcp.Tool {
-	return mcp.NewTool("browser_get_page_info",
-		mcp.WithDescription("Get information about the current page including URL and title."),
-	)
-}
-
-func BrowserGetPageInfoHandler(cdpURL string) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		controller := browser.NewController(cdpURL)
-		info, err := controller.GetPageInfo()
-		if err != nil {
-			return mcp.NewToolResultError("Error: " + err.Error()), nil
-		}
-
-		output, _ := json.Marshal(info)
-		return mcp.NewToolResultText(string(output)), nil
-	}
-}
+// --- browser_pdf (Go-specific, kept) ---
 
 func BrowserPDFToolDef() mcp.Tool {
 	return mcp.NewTool("browser_pdf",

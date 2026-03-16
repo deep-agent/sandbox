@@ -9,7 +9,9 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/chromedp/cdproto/input"
 	"github.com/chromedp/cdproto/page"
+	"github.com/chromedp/cdproto/target"
 	"github.com/chromedp/chromedp"
 	"github.com/deep-agent/sandbox/types/consts"
 	"github.com/deep-agent/sandbox/types/model"
@@ -36,6 +38,34 @@ type PageInfo struct {
 	Title  string `json:"title"`
 	Width  int    `json:"width"`
 	Height int    `json:"height"`
+}
+
+type TabInfo struct {
+	TabID string `json:"tab_id"`
+	URL   string `json:"url"`
+	Title string `json:"title"`
+}
+
+type InteractiveElement struct {
+	Tag         string `json:"tag"`
+	Text        string `json:"text,omitempty"`
+	Selector    string `json:"selector,omitempty"`
+	Placeholder string `json:"placeholder,omitempty"`
+	Href        string `json:"href,omitempty"`
+}
+
+type BrowserState struct {
+	URL                 string               `json:"url"`
+	Title               string               `json:"title"`
+	Tabs                []TabInfo            `json:"tabs"`
+	Viewport            *ViewportInfo        `json:"viewport,omitempty"`
+	InteractiveElements []InteractiveElement `json:"interactive_elements"`
+	Screenshot          string               `json:"screenshot,omitempty"`
+}
+
+type ViewportInfo struct {
+	Width  int `json:"width"`
+	Height int `json:"height"`
 }
 
 func NewController(cdpURL string) *Controller {
@@ -205,4 +235,224 @@ func (c *Controller) GetCookies() (string, error) {
 
 	result, _ := json.Marshal(cookies)
 	return string(result), nil
+}
+
+func (c *Controller) NavigateNewTab(targetURL string) error {
+	return c.run(chromedp.ActionFunc(func(ctx context.Context) error {
+		_, err := target.CreateTarget(targetURL).Do(ctx)
+		return err
+	}))
+}
+
+func (c *Controller) ClickCoordinate(x, y int) error {
+	return c.run(chromedp.ActionFunc(func(ctx context.Context) error {
+		fx := float64(x)
+		fy := float64(y)
+		if err := input.DispatchMouseEvent(input.MousePressed, fx, fy).
+			WithButton(input.Left).
+			WithClickCount(1).
+			Do(ctx); err != nil {
+			return err
+		}
+		return input.DispatchMouseEvent(input.MouseReleased, fx, fy).
+			WithButton(input.Left).
+			WithClickCount(1).
+			Do(ctx)
+	}))
+}
+
+func (c *Controller) ScrollByDirection(direction string) error {
+	var deltaY int
+	if direction == "up" {
+		deltaY = -500
+	} else {
+		deltaY = 500
+	}
+	return c.run(chromedp.Evaluate(fmt.Sprintf("window.scrollBy(0, %d)", deltaY), nil))
+}
+
+func (c *Controller) GoBack() error {
+	return c.run(chromedp.Evaluate("window.history.back()", nil))
+}
+
+func (c *Controller) GetState(includeScreenshot bool) (*BrowserState, error) {
+	var pageURL, title string
+	var elementsJSON string
+
+	js := `(function() {
+		var selectors = ['a', 'button', 'input', 'select', 'textarea', '[role="button"]', '[onclick]'];
+		var seen = new Set();
+		var results = [];
+		selectors.forEach(function(sel) {
+			document.querySelectorAll(sel).forEach(function(el) {
+				if (seen.has(el)) return;
+				seen.add(el);
+				var rect = el.getBoundingClientRect();
+				if (rect.width === 0 && rect.height === 0) return;
+				var text = (el.textContent || '').trim().substring(0, 100);
+				var entry = {tag: el.tagName.toLowerCase(), text: text};
+				if (el.id) entry.selector = '#' + el.id;
+				else if (el.name) entry.selector = el.tagName.toLowerCase() + '[name="' + el.name + '"]';
+				else if (el.className && typeof el.className === 'string') entry.selector = el.tagName.toLowerCase() + '.' + el.className.trim().split(/\s+/).join('.');
+				if (el.placeholder) entry.placeholder = el.placeholder;
+				if (el.href) entry.href = el.href;
+				results.push(entry);
+			});
+		});
+		return JSON.stringify(results);
+	})()`
+
+	if err := c.run(
+		chromedp.Location(&pageURL),
+		chromedp.Title(&title),
+		chromedp.Evaluate(js, &elementsJSON),
+	); err != nil {
+		return nil, fmt.Errorf("failed to get browser state: %w", err)
+	}
+
+	state := &BrowserState{
+		URL:   pageURL,
+		Title: title,
+	}
+
+	if elementsJSON != "" {
+		var elements []InteractiveElement
+		if err := json.Unmarshal([]byte(elementsJSON), &elements); err == nil {
+			state.InteractiveElements = elements
+		}
+	}
+	if state.InteractiveElements == nil {
+		state.InteractiveElements = []InteractiveElement{}
+	}
+
+	if includeScreenshot {
+		b64, err := c.Screenshot(nil)
+		if err == nil {
+			state.Screenshot = b64
+		}
+	}
+
+	// Get tabs
+	tabs, err := c.ListTabs()
+	if err == nil {
+		state.Tabs = tabs
+	}
+
+	return state, nil
+}
+
+func (c *Controller) ListTabs() ([]TabInfo, error) {
+	var tabs []TabInfo
+	err := c.run(chromedp.ActionFunc(func(ctx context.Context) error {
+		targets, err := target.GetTargets().Do(ctx)
+		if err != nil {
+			return err
+		}
+		for _, t := range targets {
+			if t.Type != "page" {
+				continue
+			}
+			id := string(t.TargetID)
+			tabID := id
+			if len(id) > 4 {
+				tabID = id[len(id)-4:]
+			}
+			tabs = append(tabs, TabInfo{
+				TabID: tabID,
+				URL:   t.URL,
+				Title: t.Title,
+			})
+		}
+		return nil
+	}))
+	if err != nil {
+		return nil, fmt.Errorf("failed to list tabs: %w", err)
+	}
+	if tabs == nil {
+		tabs = []TabInfo{}
+	}
+	return tabs, nil
+}
+
+func (c *Controller) findTargetByTabID(tabID string) (target.ID, error) {
+	var found target.ID
+	err := c.run(chromedp.ActionFunc(func(ctx context.Context) error {
+		targets, err := target.GetTargets().Do(ctx)
+		if err != nil {
+			return err
+		}
+		for _, t := range targets {
+			if t.Type != "page" {
+				continue
+			}
+			id := string(t.TargetID)
+			suffix := id
+			if len(id) > 4 {
+				suffix = id[len(id)-4:]
+			}
+			if suffix == tabID {
+				found = t.TargetID
+				return nil
+			}
+		}
+		return fmt.Errorf("tab %q not found", tabID)
+	}))
+	return found, err
+}
+
+func (c *Controller) SwitchTab(tabID string) error {
+	targetID, err := c.findTargetByTabID(tabID)
+	if err != nil {
+		return err
+	}
+	return c.run(chromedp.ActionFunc(func(ctx context.Context) error {
+		return target.ActivateTarget(targetID).Do(ctx)
+	}))
+}
+
+func (c *Controller) CloseTab(tabID string) error {
+	targetID, err := c.findTargetByTabID(tabID)
+	if err != nil {
+		return err
+	}
+	// Create a new chromedp context attached to the specific target,
+	// then cancel it to close the tab cleanly.
+	newCtx, cancel := chromedp.NewContext(c.allocCtx, chromedp.WithTargetID(targetID))
+	defer cancel()
+	// Ensure the context is initialized (attaches to the target)
+	if err := chromedp.Run(newCtx); err != nil {
+		// If we can't attach, the target may already be gone
+		return nil
+	}
+	// Cancel the context, which tells chromedp to close the target
+	cancel()
+	return nil
+}
+
+// findFullTargetID resolves a short tab ID (last 4 chars) to the full target ID string.
+// Used by CloseTab's HTTP approach.
+func (c *Controller) findFullTargetID(tabID string) (string, error) {
+	var fullID string
+	err := c.run(chromedp.ActionFunc(func(ctx context.Context) error {
+		targets, err := target.GetTargets().Do(ctx)
+		if err != nil {
+			return err
+		}
+		for _, t := range targets {
+			if t.Type != "page" {
+				continue
+			}
+			id := string(t.TargetID)
+			suffix := id
+			if len(id) > 4 {
+				suffix = id[len(id)-4:]
+			}
+			if suffix == tabID {
+				fullID = id
+				return nil
+			}
+		}
+		return fmt.Errorf("tab %q not found", tabID)
+	}))
+	return fullID, err
 }
