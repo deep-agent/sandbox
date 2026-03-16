@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/chromedp/cdproto/page"
@@ -17,6 +18,11 @@ import (
 type Controller struct {
 	cdpURL  string
 	timeout time.Duration
+
+	allocCtx    context.Context
+	allocCancel context.CancelFunc
+	browserCtx  context.Context
+	ctxCancel   context.CancelFunc
 }
 
 type ScreenshotOptions struct {
@@ -33,15 +39,37 @@ type PageInfo struct {
 }
 
 func NewController(cdpURL string) *Controller {
+	allocCtx, allocCancel := chromedp.NewRemoteAllocator(context.Background(), cdpURL)
+	browserCtx, ctxCancel := chromedp.NewContext(allocCtx)
+
 	return &Controller{
-		cdpURL:  cdpURL,
-		timeout: consts.DefaultBrowserTimeout,
+		cdpURL:      cdpURL,
+		timeout:     consts.DefaultBrowserTimeout,
+		allocCtx:    allocCtx,
+		allocCancel: allocCancel,
+		browserCtx:  browserCtx,
+		ctxCancel:   ctxCancel,
+	}
+}
+
+func (c *Controller) Close() {
+	if c.ctxCancel != nil {
+		c.ctxCancel()
+	}
+	if c.allocCancel != nil {
+		c.allocCancel()
 	}
 }
 
 func (c *Controller) GetInfo() (*model.BrowserInfo, error) {
-	resp, err := http.Get(fmt.Sprintf("http://localhost:%s/json/version",
-		c.cdpURL[len("ws://localhost:"):]))
+	u, err := url.Parse(c.cdpURL)
+	if err != nil {
+		return &model.BrowserInfo{
+			CDPURL: c.cdpURL,
+			Status: "disconnected",
+		}, nil
+	}
+	resp, err := http.Get(fmt.Sprintf("http://%s/json/version", u.Host))
 	if err != nil {
 		return &model.BrowserInfo{
 			CDPURL: c.cdpURL,
@@ -57,29 +85,19 @@ func (c *Controller) GetInfo() (*model.BrowserInfo, error) {
 	}, nil
 }
 
-func (c *Controller) createContext() (context.Context, context.CancelFunc) {
-	allocCtx, allocCancel := chromedp.NewRemoteAllocator(context.Background(), c.cdpURL)
-	ctx, ctxCancel := chromedp.NewContext(allocCtx)
-	ctx, timeoutCancel := context.WithTimeout(ctx, c.timeout)
-
-	return ctx, func() {
-		timeoutCancel()
-		ctxCancel()
-		allocCancel()
-	}
+func (c *Controller) run(actions ...chromedp.Action) error {
+	// Use a timeout context but do NOT defer cancel() — canceling a child context
+	// of the chromedp browser context would cause chromedp to close the tab.
+	// The context will be garbage-collected after the timeout expires.
+	ctx, _ := context.WithTimeout(c.browserCtx, c.timeout)
+	return chromedp.Run(ctx, actions...)
 }
 
 func (c *Controller) Navigate(url string) error {
-	ctx, cancel := c.createContext()
-	defer cancel()
-
-	return chromedp.Run(ctx, chromedp.Navigate(url))
+	return c.run(chromedp.Navigate(url))
 }
 
 func (c *Controller) Screenshot(opts *ScreenshotOptions) (string, error) {
-	ctx, cancel := c.createContext()
-	defer cancel()
-
 	var buf []byte
 	var action chromedp.Action
 
@@ -89,7 +107,7 @@ func (c *Controller) Screenshot(opts *ScreenshotOptions) (string, error) {
 		action = chromedp.CaptureScreenshot(&buf)
 	}
 
-	if err := chromedp.Run(ctx, action); err != nil {
+	if err := c.run(action); err != nil {
 		return "", fmt.Errorf("failed to capture screenshot: %w", err)
 	}
 
@@ -97,11 +115,8 @@ func (c *Controller) Screenshot(opts *ScreenshotOptions) (string, error) {
 }
 
 func (c *Controller) GetCurrentURL() (string, error) {
-	ctx, cancel := c.createContext()
-	defer cancel()
-
 	var url string
-	if err := chromedp.Run(ctx, chromedp.Location(&url)); err != nil {
+	if err := c.run(chromedp.Location(&url)); err != nil {
 		return "", fmt.Errorf("failed to get current URL: %w", err)
 	}
 
@@ -109,11 +124,8 @@ func (c *Controller) GetCurrentURL() (string, error) {
 }
 
 func (c *Controller) GetTitle() (string, error) {
-	ctx, cancel := c.createContext()
-	defer cancel()
-
 	var title string
-	if err := chromedp.Run(ctx, chromedp.Title(&title)); err != nil {
+	if err := c.run(chromedp.Title(&title)); err != nil {
 		return "", fmt.Errorf("failed to get title: %w", err)
 	}
 
@@ -121,28 +133,19 @@ func (c *Controller) GetTitle() (string, error) {
 }
 
 func (c *Controller) Click(selector string) error {
-	ctx, cancel := c.createContext()
-	defer cancel()
-
-	return chromedp.Run(ctx, chromedp.Click(selector, chromedp.NodeVisible))
+	return c.run(chromedp.Click(selector, chromedp.ByQuery))
 }
 
 func (c *Controller) Type(selector, text string) error {
-	ctx, cancel := c.createContext()
-	defer cancel()
-
-	return chromedp.Run(ctx,
-		chromedp.Click(selector, chromedp.NodeVisible),
-		chromedp.SendKeys(selector, text),
+	return c.run(
+		chromedp.Click(selector, chromedp.ByQuery),
+		chromedp.SendKeys(selector, text, chromedp.ByQuery),
 	)
 }
 
 func (c *Controller) Evaluate(expression string) (interface{}, error) {
-	ctx, cancel := c.createContext()
-	defer cancel()
-
 	var result interface{}
-	if err := chromedp.Run(ctx, chromedp.Evaluate(expression, &result)); err != nil {
+	if err := c.run(chromedp.Evaluate(expression, &result)); err != nil {
 		return nil, fmt.Errorf("failed to evaluate: %w", err)
 	}
 
@@ -150,11 +153,8 @@ func (c *Controller) Evaluate(expression string) (interface{}, error) {
 }
 
 func (c *Controller) GetHTML(selector string) (string, error) {
-	ctx, cancel := c.createContext()
-	defer cancel()
-
 	var html string
-	if err := chromedp.Run(ctx, chromedp.OuterHTML(selector, &html)); err != nil {
+	if err := c.run(chromedp.OuterHTML(selector, &html)); err != nil {
 		return "", fmt.Errorf("failed to get HTML: %w", err)
 	}
 
@@ -162,25 +162,16 @@ func (c *Controller) GetHTML(selector string) (string, error) {
 }
 
 func (c *Controller) WaitVisible(selector string) error {
-	ctx, cancel := c.createContext()
-	defer cancel()
-
-	return chromedp.Run(ctx, chromedp.WaitVisible(selector))
+	return c.run(chromedp.WaitReady(selector))
 }
 
 func (c *Controller) Scroll(x, y int64) error {
-	ctx, cancel := c.createContext()
-	defer cancel()
-
-	return chromedp.Run(ctx, chromedp.Evaluate(fmt.Sprintf("window.scrollTo(%d, %d)", x, y), nil))
+	return c.run(chromedp.Evaluate(fmt.Sprintf("window.scrollTo(%d, %d)", x, y), nil))
 }
 
 func (c *Controller) GetPageInfo() (*PageInfo, error) {
-	ctx, cancel := c.createContext()
-	defer cancel()
-
 	var url, title string
-	if err := chromedp.Run(ctx,
+	if err := c.run(
 		chromedp.Location(&url),
 		chromedp.Title(&title),
 	); err != nil {
@@ -194,11 +185,8 @@ func (c *Controller) GetPageInfo() (*PageInfo, error) {
 }
 
 func (c *Controller) PDF() (string, error) {
-	ctx, cancel := c.createContext()
-	defer cancel()
-
 	var buf []byte
-	if err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
+	if err := c.run(chromedp.ActionFunc(func(ctx context.Context) error {
 		var err error
 		buf, _, err = page.PrintToPDF().WithPrintBackground(true).Do(ctx)
 		return err
@@ -210,11 +198,8 @@ func (c *Controller) PDF() (string, error) {
 }
 
 func (c *Controller) GetCookies() (string, error) {
-	ctx, cancel := c.createContext()
-	defer cancel()
-
 	var cookies interface{}
-	if err := chromedp.Run(ctx, chromedp.Evaluate("document.cookie", &cookies)); err != nil {
+	if err := c.run(chromedp.Evaluate("document.cookie", &cookies)); err != nil {
 		return "", fmt.Errorf("failed to get cookies: %w", err)
 	}
 

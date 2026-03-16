@@ -1,9 +1,32 @@
 package browser
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strings"
 	"testing"
 	"time"
 )
+
+// getCDPURL discovers the WebSocket debugger URL from a Chrome instance
+// running with --remote-debugging-port on the given port.
+func getCDPURL(port int) (string, error) {
+	resp, err := http.Get(fmt.Sprintf("http://localhost:%d/json/version", port))
+	if err != nil {
+		return "", fmt.Errorf("Chrome CDP not available on port %d: %w", port, err)
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		WebSocketDebuggerURL string `json:"webSocketDebuggerUrl"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("failed to decode CDP response: %w", err)
+	}
+	return result.WebSocketDebuggerURL, nil
+}
 
 func TestNewController(t *testing.T) {
 	cdpURL := "ws://localhost:9222"
@@ -121,4 +144,167 @@ func TestPageInfo_ZeroValues(t *testing.T) {
 	if info.Height != 0 {
 		t.Errorf("default Height = %d, want 0", info.Height)
 	}
+}
+
+// TestController_CDP tests all browser controller capabilities against a real
+// Chrome instance. Requires Chrome running with --remote-debugging-port=9222.
+// Skipped automatically if Chrome CDP is not available.
+func TestController_CDP(t *testing.T) {
+	cdpURL, err := getCDPURL(9222)
+	if err != nil {
+		t.Skipf("Skipping CDP tests: %v", err)
+	}
+
+	c := NewController(cdpURL)
+	defer c.Close()
+
+	t.Run("GetInfo", func(t *testing.T) {
+		info, err := c.GetInfo()
+		if err != nil {
+			t.Fatalf("GetInfo failed: %v", err)
+		}
+		if info.Status != "connected" {
+			t.Fatalf("expected connected, got %s", info.Status)
+		}
+		t.Logf("status=%s", info.Status)
+	})
+
+	t.Run("Navigate", func(t *testing.T) {
+		if err := c.Navigate("https://www.example.com"); err != nil {
+			t.Fatalf("Navigate failed: %v", err)
+		}
+	})
+
+	t.Run("GetCurrentURL", func(t *testing.T) {
+		url, err := c.GetCurrentURL()
+		if err != nil {
+			t.Fatalf("GetCurrentURL failed: %v", err)
+		}
+		if !strings.Contains(url, "example.com") {
+			t.Fatalf("expected example.com in URL, got %s", url)
+		}
+		t.Logf("url=%s", url)
+	})
+
+	t.Run("GetTitle", func(t *testing.T) {
+		title, err := c.GetTitle()
+		if err != nil {
+			t.Fatalf("GetTitle failed: %v", err)
+		}
+		if title == "" {
+			t.Fatal("returned empty title")
+		}
+		t.Logf("title=%s", title)
+	})
+
+	t.Run("GetPageInfo", func(t *testing.T) {
+		info, err := c.GetPageInfo()
+		if err != nil {
+			t.Fatalf("GetPageInfo failed: %v", err)
+		}
+		if info.URL == "" || info.Title == "" {
+			t.Fatalf("empty fields: url=%s title=%s", info.URL, info.Title)
+		}
+		t.Logf("url=%s title=%s", info.URL, info.Title)
+	})
+
+	t.Run("Screenshot_Viewport", func(t *testing.T) {
+		b64, err := c.Screenshot(nil)
+		if err != nil {
+			t.Fatalf("Screenshot failed: %v", err)
+		}
+		data, _ := base64.StdEncoding.DecodeString(b64)
+		if len(data) < 100 {
+			t.Fatal("screenshot too small")
+		}
+		t.Logf("%d bytes", len(data))
+	})
+
+	t.Run("Screenshot_Full", func(t *testing.T) {
+		b64, err := c.Screenshot(&ScreenshotOptions{Full: true})
+		if err != nil {
+			t.Fatalf("Screenshot(full) failed: %v", err)
+		}
+		data, _ := base64.StdEncoding.DecodeString(b64)
+		if len(data) < 100 {
+			t.Fatal("screenshot too small")
+		}
+		t.Logf("%d bytes", len(data))
+	})
+
+	t.Run("GetHTML", func(t *testing.T) {
+		html, err := c.GetHTML("body")
+		if err != nil {
+			t.Fatalf("GetHTML failed: %v", err)
+		}
+		if !strings.Contains(html, "Example Domain") {
+			t.Fatalf("expected 'Example Domain' in HTML, got: %s", html[:min(200, len(html))])
+		}
+		t.Logf("%d chars", len(html))
+	})
+
+	t.Run("WaitVisible", func(t *testing.T) {
+		if err := c.WaitVisible("h1"); err != nil {
+			t.Fatalf("WaitVisible failed: %v", err)
+		}
+	})
+
+	t.Run("Evaluate", func(t *testing.T) {
+		result, err := c.Evaluate("document.title")
+		if err != nil {
+			t.Fatalf("Evaluate failed: %v", err)
+		}
+		title := fmt.Sprintf("%v", result)
+		if !strings.Contains(title, "Example Domain") {
+			t.Fatalf("expected 'Example Domain', got: %v", result)
+		}
+		t.Logf("result=%v", result)
+	})
+
+	t.Run("Scroll", func(t *testing.T) {
+		if err := c.Scroll(0, 100); err != nil {
+			t.Fatalf("Scroll failed: %v", err)
+		}
+	})
+
+	t.Run("Click", func(t *testing.T) {
+		if err := c.Click("a"); err != nil {
+			t.Fatalf("Click failed: %v", err)
+		}
+	})
+
+	t.Run("Type", func(t *testing.T) {
+		if err := c.Navigate(`data:text/html,<html><body><input id="test" type="text"></body></html>`); err != nil {
+			t.Fatalf("Navigate to test page failed: %v", err)
+		}
+		if err := c.Type("#test", "hello world"); err != nil {
+			t.Fatalf("Type failed: %v", err)
+		}
+		result, err := c.Evaluate(`document.getElementById("test").value`)
+		if err != nil {
+			t.Fatalf("Evaluate after Type failed: %v", err)
+		}
+		t.Logf("input value=%v", result)
+	})
+
+	t.Run("GetCookies", func(t *testing.T) {
+		_ = c.Navigate("https://www.example.com")
+		cookies, err := c.GetCookies()
+		if err != nil {
+			t.Fatalf("GetCookies failed: %v", err)
+		}
+		t.Logf("cookies=%s", cookies)
+	})
+
+	t.Run("PDF", func(t *testing.T) {
+		b64, err := c.PDF()
+		if err != nil {
+			t.Fatalf("PDF failed: %v", err)
+		}
+		data, _ := base64.StdEncoding.DecodeString(b64)
+		if len(data) < 100 {
+			t.Fatal("PDF too small")
+		}
+		t.Logf("%d bytes", len(data))
+	})
 }

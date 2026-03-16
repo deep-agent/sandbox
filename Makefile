@@ -1,4 +1,4 @@
-.PHONY: build build-linux clean run push-to-dockerhub docker-run test ensure-env
+.PHONY: build build-linux clean run push-to-dockerhub docker-run test ensure-env cdp cdp-stop
 
 BINARY_NAME=sandbox
 IMAGE_NAME=fanlv/sandbox:latest
@@ -84,3 +84,20 @@ fmt:
 
 lint:
 	golangci-lint run
+
+cdp-stop:
+	@pkill -f 'Chrome.*--remote-debugging-port=9222' 2>/dev/null && echo "Chrome CDP stopped." || echo "Chrome CDP is not running."
+
+cdp:
+	@/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-debug > /tmp/chrome-cdp.log 2>&1 &
+	@echo "Waiting for Chrome CDP to start..."
+	@for i in 1 2 3 4 5 6 7 8 9 10; do \
+		if curl -s http://localhost:9222/json/version > /dev/null 2>&1; then \
+			echo "Chrome CDP is ready:"; \
+			curl -s http://localhost:9222/json/version; \
+			exit 0; \
+		fi; \
+		sleep 1; \
+	done; \
+	echo "Failed to connect to Chrome CDP on port 9222"; \
+	exit 1
