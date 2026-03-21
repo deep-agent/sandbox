@@ -33,6 +33,7 @@ services:
     volumes:
       - ${LOCAL_MEMORY:-./docker/volumes}/workspace:/home/sandbox/workspace
       - ${LOCAL_MEMORY:-./docker/volumes}/agent/prompts:/home/sandbox/agent/prompts
+      - ${LOCAL_MEMORY:-./docker/volumes}/bin:/home/sandbox/.local/bin
       - ${LOCAL_SUPERVISOR_CONF:-./docker/volumes/app.supervisor.d}:/home/sandbox/app.supervisor.d
       - ${LOCAL_USERDATA:-./docker/volumes/userdata}:/home/sandbox/userdata
       - ~/.ssh/id_rsa:/home/sandbox/.ssh/id_rsa:ro
