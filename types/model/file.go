@@ -53,3 +53,12 @@ type MkDirRequest struct {
 type FileExistsResult struct {
 	Exists bool `json:"exists"`
 }
+
+type FileUploadResult struct {
+	File string `json:"file"`
+	Size int64  `json:"size"`
+}
+
+type FileDownloadRequest struct {
+	File string `json:"file" query:"file" vd:"len($)>0"`
+}

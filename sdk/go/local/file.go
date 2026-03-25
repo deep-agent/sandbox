@@ -1,6 +1,15 @@
 package local
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"mime"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/deep-agent/sandbox/types/model"
 )
 
@@ -62,4 +71,71 @@ func (c *Client) FileExists(path string) (*model.FileExistsResult, error) {
 	return &model.FileExistsResult{
 		Exists: exists,
 	}, nil
+}
+
+func (c *Client) FileUpload(filename string, reader io.Reader, destPath string) (*model.FileUploadResult, error) {
+	// If destPath ends with /, treat it as a directory and append filename
+	if strings.HasSuffix(destPath, "/") {
+		destPath = filepath.Join(destPath, filename)
+	}
+
+	content, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read upload content: %w", err)
+	}
+
+	dir := filepath.Dir(destPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	if err := os.WriteFile(destPath, content, 0644); err != nil {
+		return nil, fmt.Errorf("failed to write file: %w", err)
+	}
+
+	return &model.FileUploadResult{
+		File: destPath,
+		Size: int64(len(content)),
+	}, nil
+}
+
+func (c *Client) FileDownload(filePath string) (io.ReadCloser, string, error) {
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return nil, "", err
+	}
+	if info.IsDir() {
+		return nil, "", fmt.Errorf("path is a directory, not a file")
+	}
+
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to read file: %w", err)
+	}
+
+	contentType := localDetectContentType(filePath, content)
+	return io.NopCloser(bytes.NewReader(content)), contentType, nil
+}
+
+func localDetectContentType(filePath string, content []byte) string {
+	ext := strings.ToLower(filepath.Ext(filePath))
+	if ct := mime.TypeByExtension(ext); ct != "" {
+		return ct
+	}
+
+	textExts := map[string]string{
+		".go": "text/plain; charset=utf-8", ".py": "text/plain; charset=utf-8",
+		".rs": "text/plain; charset=utf-8", ".rb": "text/plain; charset=utf-8",
+		".java": "text/plain; charset=utf-8", ".c": "text/plain; charset=utf-8",
+		".h": "text/plain; charset=utf-8", ".cpp": "text/plain; charset=utf-8",
+		".sh": "text/plain; charset=utf-8", ".yml": "text/plain; charset=utf-8",
+		".yaml": "text/plain; charset=utf-8", ".toml": "text/plain; charset=utf-8",
+		".log": "text/plain; charset=utf-8", ".md": "text/plain; charset=utf-8",
+		".txt": "text/plain; charset=utf-8",
+	}
+	if ct, ok := textExts[ext]; ok {
+		return ct
+	}
+
+	return http.DetectContentType(content)
 }

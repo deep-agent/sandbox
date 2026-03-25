@@ -86,6 +86,8 @@ func (r *Router) Setup() {
 			fileGroup.POST("/copy", fileHandler.CopyFile)
 			fileGroup.POST("/mkdir", fileHandler.MkDir)
 			fileGroup.GET("/exists", fileHandler.Exists)
+			fileGroup.POST("/upload", fileHandler.Upload)
+			fileGroup.GET("/download", fileHandler.Download)
 		}
 
 		grepGroup := v1.Group("/grep")

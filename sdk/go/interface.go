@@ -1,6 +1,10 @@
 package sandbox
 
-import "github.com/deep-agent/sandbox/types/model"
+import (
+	"io"
+
+	"github.com/deep-agent/sandbox/types/model"
+)
 
 type Sandbox interface {
 	ContextProvider
@@ -29,6 +33,8 @@ type FileManager interface {
 	FileCopy(req *model.FileCopyRequest) error
 	MkDir(req *model.MkDirRequest) error
 	FileExists(path string) (*model.FileExistsResult, error)
+	FileUpload(filename string, reader io.Reader, destPath string) (*model.FileUploadResult, error)
+	FileDownload(filePath string) (io.ReadCloser, string, error) // returns body, contentType, error
 }
 
 type GrepSearcher interface {
