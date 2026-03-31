@@ -10,7 +10,6 @@ type Config struct {
 	MCPHubPort        int
 	VNCServerPort     int
 	WebSocketPort     int
-	BrowserCDPPort    int
 	Workspace         string
 }
 
@@ -25,7 +24,6 @@ func Load() *Config {
 		MCPHubPort:        getEnvInt("MCP_HUB_PORT", 8001),
 		VNCServerPort:     getEnvInt("VNC_SERVER_PORT", 5900),
 		WebSocketPort:     getEnvInt("WEBSOCKET_PROXY_PORT", 6080),
-		BrowserCDPPort:    getEnvInt("BROWSER_REMOTE_DEBUGGING_PORT", 9222),
 		Workspace:         workspace,
 	}
 }

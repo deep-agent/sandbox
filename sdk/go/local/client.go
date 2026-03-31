@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/deep-agent/sandbox/internal/services/bash"
-	"github.com/deep-agent/sandbox/internal/services/browser"
 	"github.com/deep-agent/sandbox/internal/services/filesystem"
 	"github.com/deep-agent/sandbox/internal/services/jsonl"
 	"github.com/deep-agent/sandbox/internal/services/web"
@@ -21,19 +20,12 @@ type Client struct {
 	bashExecutor *bash.Executor
 	fileManager  *filesystem.Manager
 	jsonlService *jsonl.Service
-	browserCtrl  *browser.Controller
 	webFetcher   *web.Fetcher
 	webSearcher  *web.Searcher
 	sandboxCtx   *model.SandboxContext
 }
 
 type Option func(*Client)
-
-func WithBrowserCDP(cdpURL string) Option {
-	return func(c *Client) {
-		c.browserCtrl = browser.NewController(cdpURL)
-	}
-}
 
 func WithSandboxContext(ctx *model.SandboxContext) Option {
 	return func(c *Client) {

@@ -59,10 +59,6 @@
       "name": "Services layer",
       "components": [
         {
-          "name": "Browser",
-          "icon": "framework"
-        },
-        {
           "name": "Bash",
           "icon": "shell"
         },

@@ -14,6 +14,4 @@ const (
 	DefaultGrepLimit      = 100
 	DefaultGrepMaxLineLen = 2000
 	DefaultGlobLimit      = 100
-
-	DefaultBrowserTimeout = 30 * time.Second
 )

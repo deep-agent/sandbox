@@ -9,7 +9,6 @@ import (
 	"github.com/deep-agent/sandbox/internal/api/handlers"
 	"github.com/deep-agent/sandbox/internal/api/middleware"
 	"github.com/deep-agent/sandbox/internal/config"
-	"github.com/deep-agent/sandbox/internal/services/browser"
 	"github.com/deep-agent/sandbox/internal/services/filesystem"
 	"github.com/deep-agent/sandbox/internal/services/jsonl"
 	"github.com/deep-agent/sandbox/internal/services/web"
@@ -35,7 +34,6 @@ func NewRouter(cfg *config.Config) *Router {
 
 func (r *Router) Setup() {
 	fileManager := filesystem.NewManager()
-	browserController := browser.NewController(fmt.Sprintf("ws://localhost:%d", r.cfg.BrowserCDPPort))
 	webFetcher := web.NewFetcher()
 	webSearcher := web.NewSearcher()
 
@@ -43,7 +41,6 @@ func (r *Router) Setup() {
 	bashHandler := handlers.NewBashHandler()
 	fileHandler := handlers.NewFileHandler(fileManager)
 	grepHandler := handlers.NewGrepHandler(fileManager)
-	browserHandler := handlers.NewBrowserHandler(browserController)
 	webHandler := handlers.NewWebHandler(webFetcher, webSearcher)
 	jsonlService := jsonl.NewService()
 	jsonlHandler := handlers.NewJSONLHandler(jsonlService)
@@ -93,23 +90,6 @@ func (r *Router) Setup() {
 		grepGroup := v1.Group("/grep")
 		{
 			grepGroup.POST("/search", grepHandler.Search)
-		}
-
-		browserGroup := v1.Group("/browser")
-		{
-			browserGroup.GET("/info", browserHandler.GetInfo)
-			browserGroup.POST("/navigate", browserHandler.Navigate)
-			browserGroup.POST("/screenshot", browserHandler.Screenshot)
-			browserGroup.POST("/click", browserHandler.Click)
-			browserGroup.POST("/type", browserHandler.Type)
-			browserGroup.POST("/evaluate", browserHandler.Evaluate)
-			browserGroup.GET("/url", browserHandler.GetCurrentURL)
-			browserGroup.GET("/title", browserHandler.GetTitle)
-			browserGroup.POST("/scroll", browserHandler.Scroll)
-			browserGroup.POST("/html", browserHandler.GetHTML)
-			browserGroup.POST("/wait", browserHandler.WaitVisible)
-			browserGroup.GET("/page", browserHandler.GetPageInfo)
-			browserGroup.POST("/pdf", browserHandler.PDF)
 		}
 
 		webGroup := v1.Group("/web")

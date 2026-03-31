@@ -6,18 +6,10 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-type ToolConfig struct {
-	CDPURL string
-}
+type Registry struct{}
 
-type Registry struct {
-	config ToolConfig
-}
-
-func NewRegistry(cfg ToolConfig) *Registry {
-	return &Registry{
-		config: cfg,
-	}
+func NewRegistry() *Registry {
+	return &Registry{}
 }
 
 func (r *Registry) RegisterAll(addTool func(tool mcp.Tool, handler server.ToolHandlerFunc)) {
@@ -28,21 +20,6 @@ func (r *Registry) RegisterAll(addTool func(tool mcp.Tool, handler server.ToolHa
 	addTool(tools.ReadToolDef(), tools.ReadHandler())
 	addTool(tools.WriteToolDef(), tools.WriteHandler())
 	addTool(tools.EditToolDef(), tools.EditHandler())
-
-	addTool(tools.BrowserNavigateToolDef(), tools.BrowserNavigateHandler(r.config.CDPURL))
-	addTool(tools.BrowserClickToolDef(), tools.BrowserClickHandler(r.config.CDPURL))
-	addTool(tools.BrowserTypeToolDef(), tools.BrowserTypeHandler(r.config.CDPURL))
-	addTool(tools.BrowserGetStateToolDef(), tools.BrowserGetStateHandler(r.config.CDPURL))
-	addTool(tools.BrowserGetHTMLToolDef(), tools.BrowserGetHTMLHandler(r.config.CDPURL))
-	addTool(tools.BrowserScreenshotToolDef(), tools.BrowserScreenshotHandler(r.config.CDPURL))
-	addTool(tools.BrowserScrollToolDef(), tools.BrowserScrollHandler(r.config.CDPURL))
-	addTool(tools.BrowserGoBackToolDef(), tools.BrowserGoBackHandler(r.config.CDPURL))
-	addTool(tools.BrowserListTabsToolDef(), tools.BrowserListTabsHandler(r.config.CDPURL))
-	addTool(tools.BrowserSwitchTabToolDef(), tools.BrowserSwitchTabHandler(r.config.CDPURL))
-	addTool(tools.BrowserCloseTabToolDef(), tools.BrowserCloseTabHandler(r.config.CDPURL))
-	addTool(tools.BrowserEvaluateToolDef(), tools.BrowserEvaluateHandler(r.config.CDPURL))
-	addTool(tools.BrowserWaitVisibleToolDef(), tools.BrowserWaitVisibleHandler(r.config.CDPURL))
-	addTool(tools.BrowserPDFToolDef(), tools.BrowserPDFHandler(r.config.CDPURL))
 
 	addTool(tools.WebFetchToolDef(), tools.WebFetchHandler())
 	addTool(tools.WebSearchToolDef(), tools.WebSearchHandler())

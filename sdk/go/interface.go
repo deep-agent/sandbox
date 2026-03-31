@@ -11,7 +11,6 @@ type Sandbox interface {
 	BashExecutor
 	FileManager
 	GrepSearcher
-	BrowserController
 	WebClient
 	JSONLReader
 }
@@ -39,22 +38,6 @@ type FileManager interface {
 
 type GrepSearcher interface {
 	GrepSearch(req *model.GrepRequest) (*model.GrepResult, error)
-}
-
-type BrowserController interface {
-	BrowserGetInfo() (*model.BrowserInfo, error)
-	BrowserNavigate(req *model.BrowserNavigateRequest) error
-	BrowserScreenshot(req *model.BrowserScreenshotRequest) (*model.BrowserScreenshotResult, error)
-	BrowserClick(req *model.BrowserClickRequest) error
-	BrowserType(req *model.BrowserTypeRequest) error
-	BrowserEvaluate(req *model.BrowserEvaluateRequest) (*model.BrowserEvaluateResult, error)
-	BrowserScroll(req *model.BrowserScrollRequest) error
-	BrowserGetHTML(req *model.BrowserGetHTMLRequest) (*model.BrowserGetHTMLResult, error)
-	BrowserWaitVisible(req *model.BrowserWaitVisibleRequest) error
-	BrowserGetCurrentURL() (*model.BrowserURLResult, error)
-	BrowserGetTitle() (*model.BrowserTitleResult, error)
-	BrowserGetPageInfo() (*model.BrowserPageInfo, error)
-	BrowserPDF() (*model.BrowserPDFResult, error)
 }
 
 type WebClient interface {

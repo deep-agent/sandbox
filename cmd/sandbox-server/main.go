@@ -11,7 +11,6 @@ func main() {
 
 	logger.Printf("Starting Sandbox Server on port %d", cfg.SandboxServerPort)
 	logger.Printf("Workspace: %s", cfg.Workspace)
-	logger.Printf("Browser CDP Port: %d", cfg.BrowserCDPPort)
 
 	router := api.NewRouter(cfg)
 	router.Setup()

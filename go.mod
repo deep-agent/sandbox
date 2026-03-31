@@ -4,8 +4,6 @@ go 1.25
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
-	github.com/chromedp/cdproto v0.0.0-20250803210736-d308e07a266d
-	github.com/chromedp/chromedp v0.14.2
 	github.com/cloudwego/hertz v0.10.4
 	github.com/creack/pty v1.1.24
 	github.com/golang-jwt/jwt/v5 v5.3.0
@@ -22,15 +20,10 @@ require (
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect
 	github.com/bytedance/sonic/loader v0.5.0 // indirect
-	github.com/chromedp/sysutil v1.1.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/cloudwego/gopkg v0.1.4 // indirect
 	github.com/cloudwego/netpoll v0.7.2 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
-	github.com/go-json-experiment/json v0.0.0-20250725192818-e39067aee2d2 // indirect
-	github.com/gobwas/httphead v0.1.0 // indirect
-	github.com/gobwas/pool v0.2.1 // indirect
-	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/invopop/jsonschema v0.13.0 // indirect
