@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/deep-agent/sandbox/pkg/logger"
@@ -87,9 +86,7 @@ func (e *Executor) ExecuteBackground(ctx context.Context, command string, workDi
 	wrappedCommand := fmt.Sprintf("script -q -f -c %q %q", command, outputFile)
 	cmd := exec.Command("bash", "-c", wrappedCommand)
 	cmd.Dir = workDir
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
-	}
+	cmd.SysProcAttr = bashSysProcAttr()
 
 	if err := cmd.Start(); err != nil {
 		os.Remove(outputFile)
@@ -109,9 +106,7 @@ func (e *Executor) ExecuteBackground(ctx context.Context, command string, workDi
 			}
 		case <-time.After(timeout):
 			if cmd.Process != nil {
-				if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil {
-					logger.Printf("background command kill error: %v", err)
-				}
+				killProcessGroup(cmd)
 			}
 			if err := <-waitErrCh; err != nil {
 				logger.Printf("background command wait error: %v", err)
@@ -142,9 +137,7 @@ func (e *Executor) Execute(ctx context.Context, command string, workDir string, 
 
 	cmd := exec.CommandContext(ctx, "bash", "-c", command)
 	cmd.Dir = workDir
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
-	}
+	cmd.SysProcAttr = bashSysProcAttr()
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -216,9 +209,7 @@ func (e *Executor) ExecuteStream(ctx context.Context, command string, workDir st
 
 	cmd := exec.CommandContext(ctx, "bash", "-c", command)
 	cmd.Dir = workDir
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
-	}
+	cmd.SysProcAttr = bashSysProcAttr()
 
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
