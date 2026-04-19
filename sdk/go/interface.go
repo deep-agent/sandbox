@@ -34,6 +34,8 @@ type FileManager interface {
 	FileExists(path string) (*model.FileExistsResult, error)
 	FileUpload(filename string, reader io.Reader, destPath string) (*model.FileUploadResult, error)
 	FileDownload(filePath string) (io.ReadCloser, string, error) // returns body, contentType, error
+	FileAppend(req *model.FileAppendRequest) error
+	FileStat(req *model.FileStatRequest) (*model.FileStatResult, error)
 }
 
 type GrepSearcher interface {

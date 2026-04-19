@@ -128,3 +128,50 @@ func (m *Manager) MkDir(path string) error {
 
 	return nil
 }
+
+func (m *Manager) AppendFile(path string, content string) error {
+	absPath, err := m.validatePath(path)
+	if err != nil {
+		return err
+	}
+
+	dir := filepath.Dir(absPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	f, err := os.OpenFile(absPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open file for append: %w", err)
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(content); err != nil {
+		return fmt.Errorf("failed to append to file: %w", err)
+	}
+
+	return nil
+}
+
+func (m *Manager) Stat(path string) (*model.FileStatResult, error) {
+	absPath, err := m.validatePath(path)
+	if err != nil {
+		return nil, err
+	}
+
+	info, err := os.Stat(absPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &model.FileStatResult{Exists: false}, nil
+		}
+		return nil, fmt.Errorf("failed to stat path: %w", err)
+	}
+
+	return &model.FileStatResult{
+		Exists:      true,
+		IsDir:       info.IsDir(),
+		Size:        info.Size(),
+		Mode:        info.Mode().String(),
+		ModTimeUnix: info.ModTime().Unix(),
+	}, nil
+}

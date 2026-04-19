@@ -179,3 +179,22 @@ func (c *Client) FileDownload(filePath string) (io.ReadCloser, string, error) {
 	contentType := resp.Header.Get("Content-Type")
 	return resp.Body, contentType, nil
 }
+
+func (c *Client) FileAppend(req *model.FileAppendRequest) error {
+	_, err := c.doRequest("POST", "/v1/file/append", req)
+	return err
+}
+
+func (c *Client) FileStat(req *model.FileStatRequest) (*model.FileStatResult, error) {
+	resp, err := c.doRequest("POST", "/v1/file/stat", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var result model.FileStatResult
+	if err := json.Unmarshal(resp.Data, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal result: %w", err)
+	}
+
+	return &result, nil
+}

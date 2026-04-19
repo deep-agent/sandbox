@@ -74,7 +74,6 @@ func (c *Client) FileExists(path string) (*model.FileExistsResult, error) {
 }
 
 func (c *Client) FileUpload(filename string, reader io.Reader, destPath string) (*model.FileUploadResult, error) {
-	// If destPath ends with /, treat it as a directory and append filename
 	if strings.HasSuffix(destPath, "/") {
 		destPath = filepath.Join(destPath, filename)
 	}
@@ -115,6 +114,14 @@ func (c *Client) FileDownload(filePath string) (io.ReadCloser, string, error) {
 
 	contentType := localDetectContentType(filePath, content)
 	return io.NopCloser(bytes.NewReader(content)), contentType, nil
+}
+
+func (c *Client) FileAppend(req *model.FileAppendRequest) error {
+	return c.fileManager.AppendFile(req.File, req.Content)
+}
+
+func (c *Client) FileStat(req *model.FileStatRequest) (*model.FileStatResult, error) {
+	return c.fileManager.Stat(req.Path)
 }
 
 func localDetectContentType(filePath string, content []byte) string {

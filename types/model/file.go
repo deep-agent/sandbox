@@ -62,3 +62,20 @@ type FileUploadResult struct {
 type FileDownloadRequest struct {
 	File string `json:"file" query:"file" vd:"len($)>0"`
 }
+
+type FileAppendRequest struct {
+	File    string `json:"file" vd:"len($)>0"`
+	Content string `json:"content"`
+}
+
+type FileStatRequest struct {
+	Path string `json:"path" vd:"len($)>0"`
+}
+
+type FileStatResult struct {
+	Exists      bool   `json:"exists"`
+	IsDir       bool   `json:"is_dir"`
+	Size        int64  `json:"size"`
+	Mode        string `json:"mode"`
+	ModTimeUnix int64  `json:"mod_time_unix"`
+}
