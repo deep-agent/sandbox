@@ -1107,7 +1107,7 @@
               },
               "workspace": {
                 "type": "string",
-                "example": "/workspace"
+                "example": "/workspaces"
               },
               "os": {
                 "type": "string",
@@ -1181,7 +1181,7 @@
           "file": {
             "type": "string",
             "description": "文件路径",
-            "example": "/workspace/test.txt"
+            "example": "/workspaces/test.txt"
           },
           "base64": {
             "type": "boolean",
@@ -1214,7 +1214,7 @@
           "file": {
             "type": "string",
             "description": "文件路径",
-            "example": "/workspace/test.txt"
+            "example": "/workspaces/test.txt"
           },
           "content": {
             "type": "string",
@@ -1235,7 +1235,7 @@
           "path": {
             "type": "string",
             "description": "目录路径",
-            "example": "/workspace"
+            "example": "/workspaces"
           }
         }
       },
@@ -1280,7 +1280,7 @@
           "path": {
             "type": "string",
             "description": "文件路径",
-            "example": "/workspace/test.txt"
+            "example": "/workspaces/test.txt"
           }
         }
       },
@@ -1291,12 +1291,12 @@
           "source": {
             "type": "string",
             "description": "源路径",
-            "example": "/workspace/old.txt"
+            "example": "/workspaces/old.txt"
           },
           "destination": {
             "type": "string",
             "description": "目标路径",
-            "example": "/workspace/new.txt"
+            "example": "/workspaces/new.txt"
           }
         }
       },
@@ -1307,12 +1307,12 @@
           "source": {
             "type": "string",
             "description": "源路径",
-            "example": "/workspace/source.txt"
+            "example": "/workspaces/source.txt"
           },
           "destination": {
             "type": "string",
             "description": "目标路径",
-            "example": "/workspace/copy.txt"
+            "example": "/workspaces/copy.txt"
           }
         }
       },
@@ -1323,7 +1323,7 @@
           "path": {
             "type": "string",
             "description": "目录路径",
-            "example": "/workspace/newdir"
+            "example": "/workspaces/newdir"
           }
         }
       },

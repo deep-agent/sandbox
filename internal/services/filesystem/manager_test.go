@@ -21,7 +21,7 @@ func TestValidatePath(t *testing.T) {
 		},
 		{
 			name:     "absolute path",
-			path:     "/tmp/workspace/file.txt",
+			path:     "/tmp/workspaces/file.txt",
 			wantErr:  false,
 			checkAbs: true,
 		},

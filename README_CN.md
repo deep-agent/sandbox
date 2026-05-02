@@ -10,7 +10,7 @@ AI Agent Sandbox - 基于 Golang 实现的一体化的 AI Agent 沙箱执行环�
 
 ```bash
 mkdir /path/to/memory
-mkdir /path/to/memory/workspace
+mkdir /path/to/memory/workspaces
 
 # 设置主机路径，用于持久化存储（工作目录、提示词等）
 export LOCAL_MEMORY="/path/to/memory"
@@ -290,7 +290,7 @@ MCP Hub 提供以下工具：
 | `BROWSER_REMOTE_DEBUGGING_PORT` | 9222 | Chrome CDP 端口 |
 | `VNC_SERVER_PORT` | 5900 | VNC 服务端口 |
 | `WEBSOCKET_PROXY_PORT` | 6080 | WebSocket 代理端口 (noVNC) |
-| `WORKSPACE` | /home/sandbox/workspace | 工作目录 |
+| `WORKSPACE` | /home/sandbox/workspaces | 工作目录 |
 | `SUPERVISOR_CONF_DIR` | /home/sandbox/app.supervisor.d | Supervisord 配置目录 |
 | `APP_SERVICE_PORT` | 9000 | 用户 HTTP 服务端口（通过 `/app/` 访问） |
 | `JWT_SECRET` | - | JWT HMAC 共享密钥 (可选) |
@@ -319,7 +319,7 @@ export JWT_AUTH_REQUIRED="true"            # 可选，强制鉴权
 | 变量 | 默认值 | 描述 |
 |------|--------|------|
 | `HOST_PORT` | 8080 | 宿主机映射到容器 8080 的端口 |
-| `LOCAL_MEMORY` | ./docker/volumes | 持久化存储基础路径；其 `workspace` 子目录挂载到 `/home/sandbox/workspace` |
+| `LOCAL_MEMORY` | ./docker/volumes | 持久化存储基础路径；其 `workspaces` 子目录挂载到 `/home/sandbox/workspaces` |
 | `LOCAL_SUPERVISOR_CONF` | ./docker/volumes/app.supervisor.d | 挂载到 `/home/sandbox/app.supervisor.d` 的宿主机路径 |
 | `LOCAL_USERDATA` | ./docker/volumes/userdata | 挂载到 `/home/sandbox/userdata` 的宿主机路径 |
 | `LOCAL_INIT_SCRIPTS` | ./docker/volumes/init.d | 挂载到 `/docker-entrypoint.d` 的宿主机路径 |
@@ -340,7 +340,7 @@ Sandbox 支持用户注入自定义程序和脚本，提供以下扩展机制：
 
 ```
 docker/volumes/
-├── workspace/          # 用户工作目录，挂载到 /home/sandbox/workspace
+├── workspaces/         # 用户工作目录，挂载到 /home/sandbox/workspaces
 ├── app.supervisor.d/   # Supervisord 配置目录，挂载到 /home/sandbox/app.supervisor.d
 ├── userdata/           # 用户数据目录，挂载到 /home/sandbox/userdata (脚本、二进制文件)
 └── init.d/             # 初始化脚本目录，挂载到 /docker-entrypoint.d

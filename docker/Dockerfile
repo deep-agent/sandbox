@@ -83,7 +83,7 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
     gh --version
 
 RUN useradd -m -s /bin/bash sandbox && \
-    mkdir -p /home/sandbox/workspace && \
+    mkdir -p /home/sandbox/workspaces && \
     mkdir -p /home/sandbox/app.supervisor.d && \
     mkdir -p /home/sandbox/userdata && \
     mkdir -p /home/sandbox/.ssh && \
@@ -99,7 +99,7 @@ RUN mkdir -p /var/lib/nginx/body /var/lib/nginx/proxy /var/lib/nginx/fastcgi /va
 
 ENV HOME=/home/sandbox
 ENV PATH=/home/sandbox/.local/bin:${PATH}
-ENV WORKSPACE=/home/sandbox/workspace
+ENV WORKSPACE=/home/sandbox/workspaces
 ENV SUPERVISOR_CONF_DIR=/home/sandbox/app.supervisor.d
 ENV DISPLAY=:99
 ENV VNC_SERVER_PORT=5900

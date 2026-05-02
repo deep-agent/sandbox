@@ -15,7 +15,7 @@ services:
     env_file:
       - .env
     environment:
-      WORKSPACE: ${WORKSPACE:-/home/sandbox/workspace}
+      WORKSPACE: ${WORKSPACE:-/home/sandbox/workspaces}
       SUPERVISOR_CONF_DIR: ${SUPERVISOR_CONF_DIR:-/home/sandbox/app.supervisor.d}
       TZ: ${TZ:-Asia/Shanghai}
       JWT_SECRET: ${JWT_SECRET:-}
@@ -25,7 +25,7 @@ services:
       ENABLE_VNC: ${ENABLE_VNC:-true}
       APP_SERVICE_PORT: ${APP_SERVICE_PORT:-9000}
     volumes:
-      - ${LOCAL_MEMORY:-./docker/volumes}/workspace:/home/sandbox/workspace
+      - ${LOCAL_MEMORY:-./docker/volumes}/workspaces:/home/sandbox/workspaces
       - ${LOCAL_MEMORY:-./docker/volumes}/agent/prompts:/home/sandbox/agent/prompts
       - ${LOCAL_MEMORY:-./docker/volumes}/bin:/home/sandbox/.local/bin
       - ${LOCAL_SUPERVISOR_CONF:-./docker/volumes/app.supervisor.d}:/home/sandbox/app.supervisor.d

@@ -10,7 +10,7 @@ AI Agent Sandbox - A sandbox execution environment for AI Agents, built with Gol
 
 ```bash
 mkdir /path/to/memory
-mkdir /path/to/memory/workspace
+mkdir /path/to/memory/workspaces
 
 # Set the host path for persistent storage (workspace, prompts, etc.)
 export LOCAL_MEMORY="/path/to/memory"
@@ -290,7 +290,7 @@ MCP Hub provides the following tools:
 | `BROWSER_REMOTE_DEBUGGING_PORT` | 9222 | Chrome CDP port |
 | `VNC_SERVER_PORT` | 5900 | VNC service port |
 | `WEBSOCKET_PROXY_PORT` | 6080 | WebSocket proxy port (noVNC) |
-| `WORKSPACE` | /home/sandbox/workspace | Working directory |
+| `WORKSPACE` | /home/sandbox/workspaces | Working directory |
 | `SUPERVISOR_CONF_DIR` | /home/sandbox/app.supervisor.d | Supervisord config directory |
 | `APP_SERVICE_PORT` | 9000 | User HTTP service port (proxied via `/app/`) |
 | `JWT_SECRET` | - | JWT HMAC shared secret (optional) |
@@ -319,7 +319,7 @@ These variables are consumed by `docker-compose` on the host side.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `HOST_PORT` | 8080 | Host port mapped to container port 8080 |
-| `LOCAL_MEMORY` | ./docker/volumes | Host base path for persistent storage; `workspace` subdirectory is mounted to `/home/sandbox/workspace` |
+| `LOCAL_MEMORY` | ./docker/volumes | Host base path for persistent storage; `workspaces` subdirectory is mounted to `/home/sandbox/workspaces` |
 | `LOCAL_SUPERVISOR_CONF` | ./docker/volumes/app.supervisor.d | Host path mounted to `/home/sandbox/app.supervisor.d` |
 | `LOCAL_USERDATA` | ./docker/volumes/userdata | Host path mounted to `/home/sandbox/userdata` |
 | `LOCAL_INIT_SCRIPTS` | ./docker/volumes/init.d | Host path mounted to `/docker-entrypoint.d` |
@@ -340,7 +340,7 @@ Sandbox supports user-injected custom programs and scripts through the following
 
 ```
 docker/volumes/
-├── workspace/          # User workspace, mounted to /home/sandbox/workspace
+├── workspaces/         # User workspace, mounted to /home/sandbox/workspaces
 ├── app.supervisor.d/   # Supervisord config dir, mounted to /home/sandbox/app.supervisor.d
 ├── userdata/           # User data dir, mounted to /home/sandbox/userdata (scripts, binaries)
 └── init.d/             # Init scripts dir, mounted to /docker-entrypoint.d

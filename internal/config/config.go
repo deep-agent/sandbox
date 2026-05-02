@@ -16,7 +16,7 @@ type Config struct {
 func Load() *Config {
 	workspace := os.Getenv("WORKSPACE")
 	if workspace == "" {
-		workspace = "/home/sandbox/workspace"
+		workspace = "/home/sandbox/workspaces"
 	}
 
 	return &Config{

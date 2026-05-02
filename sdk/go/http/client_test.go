@@ -90,7 +90,7 @@ func TestGetContext(t *testing.T) {
 		resp := map[string]interface{}{
 			"code": 0,
 			"data": map[string]interface{}{
-				"workspace": "/home/sandbox/workspace",
+				"workspace": "/home/sandbox/workspaces",
 				"os":        "linux",
 				"arch":      "amd64",
 			},
@@ -105,8 +105,8 @@ func TestGetContext(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if ctx.Workspace != "/home/sandbox/workspace" {
-		t.Errorf("expected Workspace /home/sandbox/workspace, got %s", ctx.Workspace)
+	if ctx.Workspace != "/home/sandbox/workspaces" {
+		t.Errorf("expected Workspace /home/sandbox/workspaces, got %s", ctx.Workspace)
 	}
 	if ctx.OS != "linux" {
 		t.Errorf("expected OS linux, got %s", ctx.OS)

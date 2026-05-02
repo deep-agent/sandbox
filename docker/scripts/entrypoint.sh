@@ -2,7 +2,7 @@
 set -e
 
 mkdir -p /tmp/chromium
-mkdir -p /home/sandbox/workspace
+mkdir -p /home/sandbox/workspaces
 mkdir -p /home/sandbox/app.supervisor.d
 mkdir -p /home/sandbox/userdata
 
