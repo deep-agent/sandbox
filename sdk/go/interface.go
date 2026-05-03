@@ -1,8 +1,11 @@
 package sandbox
 
 import (
+	"context"
 	"io"
+	"time"
 
+	"github.com/cloudwego/eino/components/tool"
 	"github.com/deep-agent/sandbox/types/model"
 )
 
@@ -13,6 +16,7 @@ type Sandbox interface {
 	GrepSearcher
 	WebClient
 	JSONLReader
+	MCPToolProvider
 }
 
 type ContextProvider interface {
@@ -56,4 +60,39 @@ type JSONLReader interface {
 	JSONLCountLines(req *model.JSONLCountRequest) (*model.JSONLCountResult, error)
 	JSONLReadLines(req *model.JSONLReadRequest) (*model.JSONLReadResult, error)
 	JSONLAppendLine(req *model.JSONLAppendRequest) error
+}
+
+type MCPToolProvider interface {
+	MCPTools(ctx context.Context, opts ...MCPOption) ([]tool.BaseTool, error)
+}
+
+// MCPConfig holds the unified configuration for MCPTools across implementations.
+// Fields irrelevant to a given implementation are ignored.
+type MCPConfig struct {
+	ToolNames    []string
+	ExtraHeaders map[string]string
+	InitTimeout  time.Duration
+}
+
+type MCPOption func(*MCPConfig)
+
+func WithMCPToolNames(names ...string) MCPOption {
+	return func(c *MCPConfig) { c.ToolNames = append(c.ToolNames, names...) }
+}
+
+// WithMCPHeader adds an HTTP header to MCP requests. Honored by transports
+// that speak HTTP; ignored by the in-process local client.
+func WithMCPHeader(key, value string) MCPOption {
+	return func(c *MCPConfig) {
+		if c.ExtraHeaders == nil {
+			c.ExtraHeaders = make(map[string]string)
+		}
+		c.ExtraHeaders[key] = value
+	}
+}
+
+// WithMCPInitTimeout bounds the MCP session initialization handshake.
+// Honored by transports with a handshake; ignored by the local client.
+func WithMCPInitTimeout(d time.Duration) MCPOption {
+	return func(c *MCPConfig) { c.InitTimeout = d }
 }

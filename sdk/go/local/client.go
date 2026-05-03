@@ -23,6 +23,7 @@ type Client struct {
 	webFetcher   *web.Fetcher
 	webSearcher  *web.Searcher
 	sandboxCtx   *model.SandboxContext
+	cwd          string
 }
 
 type Option func(*Client)
@@ -30,6 +31,12 @@ type Option func(*Client)
 func WithSandboxContext(ctx *model.SandboxContext) Option {
 	return func(c *Client) {
 		c.sandboxCtx = ctx
+	}
+}
+
+func WithCwd(cwd string) Option {
+	return func(c *Client) {
+		c.cwd = cwd
 	}
 }
 
