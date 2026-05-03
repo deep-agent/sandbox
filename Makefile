@@ -1,8 +1,15 @@
-.PHONY: build build-linux clean run push-to-dockerhub docker-run test ensure-env cdp cdp-stop
+.PHONY: build build-linux clean run run-all stop-all tail-log push-to-dockerhub docker-run test ensure-env cdp cdp-stop
 
 BINARY_NAME=sandbox
 IMAGE_NAME=fanlv/sandbox:latest
 GO=go
+
+WORKSPACE ?= ${LOCAL_MEMORY}/workspace
+SANDBOX_SRV_PORT ?= 8000
+MCP_HUB_PORT ?= 8001
+JWT_SECRET ?=
+JWT_AUTH_REQUIRED ?= false
+LOG_FILE ?= /tmp/sandbox.log
 
 HTTP_PROXY ?=
 HTTPS_PROXY ?=
@@ -41,10 +48,35 @@ clean:
 	rm -rf bin/
 
 run-server:
-	$(GO) run ./cmd/sandbox-server
+	env WORKSPACE="$(WORKSPACE)" \
+		SANDBOX_SRV_PORT="$(SANDBOX_SRV_PORT)" \
+		JWT_SECRET="$(JWT_SECRET)" \
+		JWT_AUTH_REQUIRED="$(JWT_AUTH_REQUIRED)" \
+		$(GO) run ./cmd/sandbox-server
 
 run-mcp:
-	$(GO) run ./cmd/mcp-hub
+	env WORKSPACE="$(WORKSPACE)" \
+		MCP_HUB_PORT="$(MCP_HUB_PORT)" \
+		$(GO) run ./cmd/mcp-hub
+
+run-all: build
+	@: > $(LOG_FILE)
+	@echo "Starting sandbox-server and mcp-hub..."
+	@nohup sh -c 'env WORKSPACE="$(WORKSPACE)" SANDBOX_SRV_PORT="$(SANDBOX_SRV_PORT)" JWT_SECRET="$(JWT_SECRET)" JWT_AUTH_REQUIRED="$(JWT_AUTH_REQUIRED)" ./bin/sandbox-server 2>&1 | sed -u "s/^/[server]  /" >> $(LOG_FILE)' >/dev/null 2>&1 &
+	@nohup sh -c 'env WORKSPACE="$(WORKSPACE)" MCP_HUB_PORT="$(MCP_HUB_PORT)" ./bin/mcp-hub 2>&1 | sed -u "s/^/[mcp-hub] /" >> $(LOG_FILE)' >/dev/null 2>&1 &
+	@sleep 1
+	@echo "Logs  -> $(LOG_FILE)"
+	@echo "Stop  -> make stop-all"
+	@echo "---- tailing log (Ctrl+C to exit, services keep running) ----"
+	@tail -f $(LOG_FILE)
+
+stop-all:
+	@pkill -f 'bin/sandbox-server' 2>/dev/null || true
+	@pkill -f 'bin/mcp-hub' 2>/dev/null || true
+	@echo "Stopped sandbox-server and mcp-hub"
+
+tail-log:
+	@tail -f $(LOG_FILE)
 
 push-to-dockerhub:
 	docker buildx build --platform linux/amd64,linux/arm64 -t $(IMAGE_NAME) -f docker/Dockerfile --push $(DOCKER_BUILD_ARGS) .
@@ -85,19 +117,3 @@ fmt:
 lint:
 	golangci-lint run
 
-cdp-stop:
-	@pkill -f 'Chrome.*--remote-debugging-port=9222' 2>/dev/null && echo "Chrome CDP stopped." || echo "Chrome CDP is not running."
-
-cdp:
-	@/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-debug > /tmp/chrome-cdp.log 2>&1 &
-	@echo "Waiting for Chrome CDP to start..."
-	@for i in 1 2 3 4 5 6 7 8 9 10; do \
-		if curl -s http://localhost:9222/json/version > /dev/null 2>&1; then \
-			echo "Chrome CDP is ready:"; \
-			curl -s http://localhost:9222/json/version; \
-			exit 0; \
-		fi; \
-		sleep 1; \
-	done; \
-	echo "Failed to connect to Chrome CDP on port 9222"; \
-	exit 1

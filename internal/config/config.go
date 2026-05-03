@@ -8,8 +8,6 @@ import (
 type Config struct {
 	SandboxServerPort int
 	MCPHubPort        int
-	VNCServerPort     int
-	WebSocketPort     int
 	Workspace         string
 }
 
@@ -22,8 +20,6 @@ func Load() *Config {
 	return &Config{
 		SandboxServerPort: getEnvInt("SANDBOX_SRV_PORT", 8000),
 		MCPHubPort:        getEnvInt("MCP_HUB_PORT", 8001),
-		VNCServerPort:     getEnvInt("VNC_SERVER_PORT", 5900),
-		WebSocketPort:     getEnvInt("WEBSOCKET_PROXY_PORT", 6080),
 		Workspace:         workspace,
 	}
 }

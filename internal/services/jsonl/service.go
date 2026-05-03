@@ -96,9 +96,19 @@ func (s *Service) AppendLine(file string, jsonStrings []string) error {
 			if err != nil {
 				return err
 			}
-			_, err = f.WriteString("\n")
-			f.Close()
-			if err != nil {
+			if _, err := f.WriteString("\n"); err != nil {
+				f.Close()
+				return err
+			}
+			// Sync before close so a crash after this write cannot leave the
+			// separator un-durable; otherwise the next append's newline check
+			// would see a missing separator and append another \n, producing
+			// an empty line between records.
+			if err := f.Sync(); err != nil {
+				f.Close()
+				return err
+			}
+			if err := f.Close(); err != nil {
 				return err
 			}
 		}
@@ -123,5 +133,10 @@ func (s *Service) AppendLine(file string, jsonStrings []string) error {
 		}
 	}
 
-	return w.Flush()
+	if err := w.Flush(); err != nil {
+		return err
+	}
+	// fsync so a crash between Flush (kernel buffer) and writeback (disk)
+	// cannot leave a half-line that the read side would permanently skip.
+	return f.Sync()
 }

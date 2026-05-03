@@ -287,9 +287,6 @@ MCP Hub 提供以下工具：
 |------|--------|------|
 | `SANDBOX_SRV_PORT` | 8000 | Sandbox Server 端口 |
 | `MCP_HUB_PORT` | 8001 | MCP Hub 端口 |
-| `BROWSER_REMOTE_DEBUGGING_PORT` | 9222 | Chrome CDP 端口 |
-| `VNC_SERVER_PORT` | 5900 | VNC 服务端口 |
-| `WEBSOCKET_PROXY_PORT` | 6080 | WebSocket 代理端口 (noVNC) |
 | `WORKSPACE` | /home/sandbox/workspaces | 工作目录 |
 | `SUPERVISOR_CONF_DIR` | /home/sandbox/app.supervisor.d | Supervisord 配置目录 |
 | `APP_SERVICE_PORT` | 9000 | 用户 HTTP 服务端口（通过 `/app/` 访问） |

@@ -287,9 +287,6 @@ MCP Hub provides the following tools:
 |----------|---------|-------------|
 | `SANDBOX_SRV_PORT` | 8000 | Sandbox Server port |
 | `MCP_HUB_PORT` | 8001 | MCP Hub port |
-| `BROWSER_REMOTE_DEBUGGING_PORT` | 9222 | Chrome CDP port |
-| `VNC_SERVER_PORT` | 5900 | VNC service port |
-| `WEBSOCKET_PROXY_PORT` | 6080 | WebSocket proxy port (noVNC) |
 | `WORKSPACE` | /home/sandbox/workspaces | Working directory |
 | `SUPERVISOR_CONF_DIR` | /home/sandbox/app.supervisor.d | Supervisord config directory |
 | `APP_SERVICE_PORT` | 9000 | User HTTP service port (proxied via `/app/`) |

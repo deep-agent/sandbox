@@ -39,3 +39,6 @@ docker/volumes/workspaces/*
 # !docker/volumes/plugins/.gitkeep
 # docker/volumes/init.d/*
 # !docker/volumes/init.d/.gitkeep
+
+*.local.md
+knowledge/*
