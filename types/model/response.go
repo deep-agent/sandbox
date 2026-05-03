@@ -7,7 +7,7 @@ type Response struct {
 }
 
 type SandboxContext struct {
-	Workspace string `json:"workspace"`
+	HomeDir   string `json:"home_dir"`
 	OS        string `json:"os"`
 	Arch      string `json:"arch"`
 	OSVersion string `json:"os_version"`

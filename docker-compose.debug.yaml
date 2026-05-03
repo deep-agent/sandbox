@@ -21,7 +21,6 @@ services:
     env_file:
       - .env
     environment:
-      WORKSPACE: ${WORKSPACE:-/home/sandbox/workspaces}
       SUPERVISOR_CONF_DIR: ${SUPERVISOR_CONF_DIR:-/home/sandbox/app.supervisor.d}
       TZ: ${TZ:-Asia/Shanghai}
       JWT_SECRET: ${JWT_SECRET:-}

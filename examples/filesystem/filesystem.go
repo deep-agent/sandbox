@@ -130,7 +130,7 @@ func getMCPTools(ctx context.Context) []tool.BaseTool {
 
 	cli, err := client.NewStreamableHttpClient(mcpURL,
 		transport.WithHTTPHeaders(map[string]string{
-			"X-Workspace":  "/tmp",
+			"X-Workspace": "/tmp",
 		}))
 	if err != nil {
 		logger.Fatalf("Failed to create MCP client: %v", err)

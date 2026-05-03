@@ -11,8 +11,7 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	if client.bashExecutor == nil {
 		t.Error("expected bashExecutor to be initialized")
@@ -23,20 +22,23 @@ func TestNewClient(t *testing.T) {
 	if client.sandboxCtx == nil {
 		t.Error("expected sandboxCtx to be initialized")
 	}
-	if client.sandboxCtx.Workspace != workDir {
-		t.Errorf("expected Workspace %s, got %s", workDir, client.sandboxCtx.Workspace)
+	expected, err := os.UserHomeDir()
+	if err != nil {
+		expected = "/home"
+	}
+	if client.sandboxCtx.HomeDir != expected {
+		t.Errorf("expected HomeDir %s, got %s", expected, client.sandboxCtx.HomeDir)
 	}
 }
 
 func TestNewClientWithSandboxContext(t *testing.T) {
-	workDir := t.TempDir()
 	ctx := &model.SandboxContext{
-		Workspace: "/home/test",
-		OS:        "linux",
-		Arch:      "amd64",
+		HomeDir: "/home/test",
+		OS:      "linux",
+		Arch:    "amd64",
 	}
 
-	client := NewClient(workDir, WithSandboxContext(ctx))
+	client := NewClient(WithSandboxContext(ctx))
 
 	if client.sandboxCtx != ctx {
 		t.Error("expected sandboxCtx to be set")
@@ -44,22 +46,24 @@ func TestNewClientWithSandboxContext(t *testing.T) {
 }
 
 func TestGetContext(t *testing.T) {
-	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	ctx, err := client.GetContext()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if ctx.Workspace != workDir {
-		t.Errorf("expected Workspace %s, got %s", workDir, ctx.Workspace)
+	expected, err := os.UserHomeDir()
+	if err != nil {
+		expected = "/home"
+	}
+	if ctx.HomeDir != expected {
+		t.Errorf("expected HomeDir %s, got %s", expected, ctx.HomeDir)
 	}
 }
 
 func TestBashExec(t *testing.T) {
-	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	result, err := client.BashExec(&model.BashExecRequest{
 		Command: "echo hello",
@@ -77,8 +81,7 @@ func TestBashExec(t *testing.T) {
 }
 
 func TestBashExecWithTimeout(t *testing.T) {
-	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	result, err := client.BashExec(&model.BashExecRequest{
 		Command:   "echo test",
@@ -94,8 +97,7 @@ func TestBashExecWithTimeout(t *testing.T) {
 }
 
 func TestBashExecWithExitCode(t *testing.T) {
-	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	result, err := client.BashExec(&model.BashExecRequest{
 		Command: "exit 1",
@@ -111,7 +113,7 @@ func TestBashExecWithExitCode(t *testing.T) {
 
 func TestFileWrite(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	testFile := filepath.Join(workDir, "test.txt")
 	err := client.FileWrite(&model.FileWriteRequest{
@@ -134,7 +136,7 @@ func TestFileWrite(t *testing.T) {
 
 func TestFileWriteBase64(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	testFile := filepath.Join(workDir, "test_base64.txt")
 	originalContent := "hello base64"
@@ -161,7 +163,7 @@ func TestFileWriteBase64(t *testing.T) {
 
 func TestFileRead(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	testFile := filepath.Join(workDir, "read_test.txt")
 	err := os.WriteFile(testFile, []byte("test content"), 0644)
@@ -183,7 +185,7 @@ func TestFileRead(t *testing.T) {
 
 func TestFileReadBase64(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	testFile := filepath.Join(workDir, "read_base64_test.txt")
 	originalContent := "test base64 content"
@@ -212,7 +214,7 @@ func TestFileReadBase64(t *testing.T) {
 
 func TestFileList(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	if err := os.WriteFile(filepath.Join(workDir, "file1.txt"), []byte("1"), 0644); err != nil {
 		t.Fatalf("failed to create file1.txt: %v", err)
@@ -238,7 +240,7 @@ func TestFileList(t *testing.T) {
 
 func TestFileDelete(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	testFile := filepath.Join(workDir, "to_delete.txt")
 	if err := os.WriteFile(testFile, []byte("delete me"), 0644); err != nil {
@@ -259,7 +261,7 @@ func TestFileDelete(t *testing.T) {
 
 func TestFileMove(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	srcFile := filepath.Join(workDir, "src.txt")
 	dstFile := filepath.Join(workDir, "dst.txt")
@@ -290,7 +292,7 @@ func TestFileMove(t *testing.T) {
 
 func TestFileCopy(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	srcFile := filepath.Join(workDir, "src_copy.txt")
 	dstFile := filepath.Join(workDir, "dst_copy.txt")
@@ -316,7 +318,7 @@ func TestFileCopy(t *testing.T) {
 
 func TestMkDir(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	newDir := filepath.Join(workDir, "new", "nested", "dir")
 	err := client.MkDir(&model.MkDirRequest{
@@ -337,7 +339,7 @@ func TestMkDir(t *testing.T) {
 
 func TestFileExists(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	existingFile := filepath.Join(workDir, "existing.txt")
 	if err := os.WriteFile(existingFile, []byte("exists"), 0644); err != nil {
@@ -364,7 +366,7 @@ func TestFileExists(t *testing.T) {
 
 func TestFileWriteAtomicAndMode(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 	testFile := filepath.Join(workDir, "atomic.txt")
 
 	err := client.FileWrite(&model.FileWriteRequest{File: testFile, Content: "atomic", Atomic: true, Mode: 0600})
@@ -383,7 +385,7 @@ func TestFileWriteAtomicAndMode(t *testing.T) {
 
 func TestFileCreateTemp(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	result, err := client.FileCreateTemp(&model.FileCreateTempRequest{Dir: workDir, Pattern: "shell-*.sh", Content: "echo hi", Mode: 0700})
 	if err != nil {
@@ -401,7 +403,7 @@ func TestFileCreateTemp(t *testing.T) {
 
 func TestFileGlob(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 	if err := os.WriteFile(filepath.Join(workDir, "a.go"), []byte("package main"), 0644); err != nil {
 		t.Fatalf("create a.go: %v", err)
 	}
@@ -420,7 +422,7 @@ func TestFileGlob(t *testing.T) {
 
 func TestFileEvalSymlinks(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 	target := filepath.Join(workDir, "target.txt")
 	link := filepath.Join(workDir, "link.txt")
 	if err := os.WriteFile(target, []byte("target"), 0644); err != nil {
@@ -441,7 +443,7 @@ func TestFileEvalSymlinks(t *testing.T) {
 
 func TestFileAppendAndStat(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 	testFile := filepath.Join(workDir, "append-stat.txt")
 
 	if err := client.FileAppend(&model.FileAppendRequest{File: testFile, Content: "abc"}); err != nil {
@@ -461,7 +463,7 @@ func TestFileAppendAndStat(t *testing.T) {
 
 func TestGrepSearch(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	testFile := filepath.Join(workDir, "grep_test.txt")
 	if err := os.WriteFile(testFile, []byte("line one\nfind this line\nline three\n"), 0644); err != nil {
@@ -483,7 +485,7 @@ func TestGrepSearch(t *testing.T) {
 
 func TestGrepSearchNoMatch(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	testFile := filepath.Join(workDir, "grep_nomatch.txt")
 	if err := os.WriteFile(testFile, []byte("line one\nline two\nline three\n"), 0644); err != nil {
@@ -505,7 +507,7 @@ func TestGrepSearchNoMatch(t *testing.T) {
 
 func TestGrepSearchCaseInsensitive(t *testing.T) {
 	workDir := t.TempDir()
-	client := NewClient(workDir)
+	client := NewClient()
 
 	testFile := filepath.Join(workDir, "grep_case.txt")
 	if err := os.WriteFile(testFile, []byte("HELLO world\nhello WORLD\n"), 0644); err != nil {
@@ -527,7 +529,7 @@ func TestGrepSearchCaseInsensitive(t *testing.T) {
 }
 
 func TestTempDir(t *testing.T) {
-	client := NewClient("")
+	client := NewClient()
 
 	result, err := client.TempDir()
 	if err != nil {
@@ -542,7 +544,7 @@ func TestTempDir(t *testing.T) {
 }
 
 func TestUserHomeDir(t *testing.T) {
-	client := NewClient("")
+	client := NewClient()
 
 	result, err := client.UserHomeDir()
 	if err != nil {

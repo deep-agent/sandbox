@@ -22,10 +22,8 @@ func NewSandboxHandler(cfg *config.Config) *SandboxHandler {
 }
 
 func (h *SandboxHandler) GetContext(ctx context.Context, c *app.RequestContext) {
-	cwd := ctxutil.GetCwd(ctx)
-
 	sandboxCtx := model.SandboxContext{
-		Workspace: cwd,
+		HomeDir:   ctxutil.GetCwd(ctx),
 		OS:        runtime.GOOS,
 		Arch:      runtime.GOARCH,
 		OSVersion: getOSVersion(),

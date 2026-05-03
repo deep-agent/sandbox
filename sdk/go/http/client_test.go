@@ -15,7 +15,7 @@ import (
 const testBaseURL = "http://localhost:8080"
 
 func TestNewClient(t *testing.T) {
-	client := NewClient(testBaseURL, "test-session")
+	client := NewClient(testBaseURL)
 
 	if client.baseURL != testBaseURL {
 		t.Errorf("expected baseURL %s, got %s", testBaseURL, client.baseURL)
@@ -31,7 +31,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestNewClientWithOptions(t *testing.T) {
-	client := NewClient(testBaseURL, "test-session",
+	client := NewClient(testBaseURL,
 		WithTimeout(60*time.Second),
 		WithSecret("test-secret"),
 	)
@@ -49,7 +49,7 @@ func TestWithSecretFromEnv(t *testing.T) {
 	os.Setenv("TEST_SECRET", "my-secret")
 	defer os.Unsetenv("TEST_SECRET")
 
-	client := NewClient(testBaseURL, "test-session", WithSecretFromEnv("TEST_SECRET"))
+	client := NewClient(testBaseURL, WithSecretFromEnv("TEST_SECRET"))
 
 	if client.tokenProvider == nil {
 		t.Error("expected tokenProvider to be set")
@@ -67,7 +67,7 @@ func TestWithSecretFromEnv(t *testing.T) {
 func TestWithSecretFromEnvEmpty(t *testing.T) {
 	os.Unsetenv("EMPTY_SECRET")
 
-	client := NewClient(testBaseURL, "test-session", WithSecretFromEnv("EMPTY_SECRET"))
+	client := NewClient(testBaseURL, WithSecretFromEnv("EMPTY_SECRET"))
 
 	token, err := client.tokenProvider()
 	if err != nil {
@@ -90,23 +90,23 @@ func TestGetContext(t *testing.T) {
 		resp := map[string]interface{}{
 			"code": 0,
 			"data": map[string]interface{}{
-				"workspace": "/home/sandbox/workspaces",
-				"os":        "linux",
-				"arch":      "amd64",
+				"home_dir": "/home/sandbox",
+				"os":       "linux",
+				"arch":     "amd64",
 			},
 		}
 		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	ctx, err := client.GetContext()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if ctx.Workspace != "/home/sandbox/workspaces" {
-		t.Errorf("expected Workspace /home/sandbox/workspaces, got %s", ctx.Workspace)
+	if ctx.HomeDir != "/home/sandbox" {
+		t.Errorf("expected HomeDir /home/sandbox, got %s", ctx.HomeDir)
 	}
 	if ctx.OS != "linux" {
 		t.Errorf("expected OS linux, got %s", ctx.OS)
@@ -145,7 +145,7 @@ func TestBashExec(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	result, err := client.BashExec(&model.BashExecRequest{
 		Command: "echo hello",
 		Cwd:     "/tmp",
@@ -187,7 +187,7 @@ func TestFileRead(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	result, err := client.FileRead(&model.FileReadRequest{
 		File: "/tmp/test.txt",
 	})
@@ -225,7 +225,7 @@ func TestFileWrite(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	err := client.FileWrite(&model.FileWriteRequest{
 		File:    "/tmp/test.txt",
 		Content: "new content",
@@ -254,7 +254,7 @@ func TestFileList(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	result, err := client.FileList(&model.FileListRequest{
 		Path: "/tmp",
 	})
@@ -278,7 +278,7 @@ func TestFileDelete(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	err := client.FileDelete(&model.FileDeleteRequest{Path: "/tmp/test.txt"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -305,7 +305,7 @@ func TestFileMove(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	err := client.FileMove(&model.FileMoveRequest{
 		Source:      "/tmp/old.txt",
 		Destination: "/tmp/new.txt",
@@ -326,7 +326,7 @@ func TestFileCopy(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	err := client.FileCopy(&model.FileCopyRequest{
 		Source:      "/tmp/src.txt",
 		Destination: "/tmp/dst.txt",
@@ -347,7 +347,7 @@ func TestMkDir(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	err := client.MkDir(&model.MkDirRequest{Path: "/tmp/newdir"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -370,7 +370,7 @@ func TestFileExists(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	result, err := client.FileExists("/tmp/test.txt")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -397,7 +397,7 @@ func TestFileWriteAtomicAndMode(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	if err := client.FileWrite(&model.FileWriteRequest{File: "/tmp/test.txt", Content: "new content", Atomic: true, Mode: 0600}); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -419,7 +419,7 @@ func TestFileCreateTemp(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	result, err := client.FileCreateTemp(&model.FileCreateTempRequest{Dir: "/tmp", Pattern: "shell-*.sh", Content: "echo hi", Mode: 0700})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -445,7 +445,7 @@ func TestFileGlob(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	result, err := client.FileGlob(&model.FileGlobRequest{Path: "/tmp", Pattern: "*.go"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -464,7 +464,7 @@ func TestFileEvalSymlinks(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	result, err := client.FileEvalSymlinks(&model.FileEvalSymlinksRequest{Path: "/tmp/link.txt"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -483,7 +483,7 @@ func TestFileAppend(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	if err := client.FileAppend(&model.FileAppendRequest{File: "/tmp/test.txt", Content: "abc"}); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -498,7 +498,7 @@ func TestFileStat(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	result, err := client.FileStat(&model.FileStatRequest{Path: "/tmp/test.txt"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -534,7 +534,7 @@ func TestGrepSearch(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	result, err := client.GrepSearch(&model.GrepRequest{
 		Pattern: "test",
 		Path:    "/tmp",
@@ -558,7 +558,7 @@ func TestAPIError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	_, err := client.GetContext()
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -579,7 +579,7 @@ func TestAPIErrorNotFound(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	_, err := client.FileRead(&model.FileReadRequest{File: "/tmp/noexist.txt"})
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -608,7 +608,7 @@ func TestAPIErrorNonNotFound(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session")
+	client := NewClient(server.URL)
 	_, err := client.FileRead(&model.FileReadRequest{File: "/tmp/test.txt"})
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -637,7 +637,7 @@ func TestAuthorizationHeader(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-session", WithSecret("test-secret"))
+	client := NewClient(server.URL, WithSecret("test-secret"))
 	if _, err := client.GetContext(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

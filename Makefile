@@ -1,10 +1,9 @@
-.PHONY: build build-linux clean run run-all stop-all tail-log push-to-dockerhub docker-run test ensure-env cdp cdp-stop
+.PHONY: build build-linux clean run run-all stop-all tail-log push-to-dockerhub docker-run test ensure-env
 
 BINARY_NAME=sandbox
 IMAGE_NAME=fanlv/sandbox:latest
 GO=go
 
-WORKSPACE ?= ${LOCAL_MEMORY}/workspace
 SANDBOX_SRV_PORT ?= 8000
 MCP_HUB_PORT ?= 8001
 JWT_SECRET ?=
@@ -48,22 +47,20 @@ clean:
 	rm -rf bin/
 
 run-server:
-	env WORKSPACE="$(WORKSPACE)" \
-		SANDBOX_SRV_PORT="$(SANDBOX_SRV_PORT)" \
+	env SANDBOX_SRV_PORT="$(SANDBOX_SRV_PORT)" \
 		JWT_SECRET="$(JWT_SECRET)" \
 		JWT_AUTH_REQUIRED="$(JWT_AUTH_REQUIRED)" \
 		$(GO) run ./cmd/sandbox-server
 
 run-mcp:
-	env WORKSPACE="$(WORKSPACE)" \
-		MCP_HUB_PORT="$(MCP_HUB_PORT)" \
+	env MCP_HUB_PORT="$(MCP_HUB_PORT)" \
 		$(GO) run ./cmd/mcp-hub
 
 run-all: build
 	@: > $(LOG_FILE)
 	@echo "Starting sandbox-server and mcp-hub..."
-	@nohup sh -c 'env WORKSPACE="$(WORKSPACE)" SANDBOX_SRV_PORT="$(SANDBOX_SRV_PORT)" JWT_SECRET="$(JWT_SECRET)" JWT_AUTH_REQUIRED="$(JWT_AUTH_REQUIRED)" ./bin/sandbox-server 2>&1 | sed -u "s/^/[server]  /" >> $(LOG_FILE)' >/dev/null 2>&1 &
-	@nohup sh -c 'env WORKSPACE="$(WORKSPACE)" MCP_HUB_PORT="$(MCP_HUB_PORT)" ./bin/mcp-hub 2>&1 | sed -u "s/^/[mcp-hub] /" >> $(LOG_FILE)' >/dev/null 2>&1 &
+	@nohup sh -c 'env SANDBOX_SRV_PORT="$(SANDBOX_SRV_PORT)" JWT_SECRET="$(JWT_SECRET)" JWT_AUTH_REQUIRED="$(JWT_AUTH_REQUIRED)" ./bin/sandbox-server 2>&1 | sed -u "s/^/[server]  /" >> $(LOG_FILE)' >/dev/null 2>&1 &
+	@nohup sh -c 'env MCP_HUB_PORT="$(MCP_HUB_PORT)" ./bin/mcp-hub 2>&1 | sed -u "s/^/[mcp-hub] /" >> $(LOG_FILE)' >/dev/null 2>&1 &
 	@sleep 1
 	@echo "Logs  -> $(LOG_FILE)"
 	@echo "Stop  -> make stop-all"

@@ -99,7 +99,6 @@ RUN mkdir -p /var/lib/nginx/body /var/lib/nginx/proxy /var/lib/nginx/fastcgi /va
 
 ENV HOME=/home/sandbox
 ENV PATH=/home/sandbox/.local/bin:${PATH}
-ENV WORKSPACE=/home/sandbox/workspaces
 ENV SUPERVISOR_CONF_DIR=/home/sandbox/app.supervisor.d
 ENV DISPLAY=:99
 ENV APP_SERVICE_PORT=9000

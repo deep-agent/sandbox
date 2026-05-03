@@ -70,7 +70,7 @@ func WithCwd(cwd string) Option {
 	}
 }
 
-func NewClient(baseURL string, _ string, opts ...Option) *Client {
+func NewClient(baseURL string, opts ...Option) *Client {
 	c := &Client{
 		baseURL: baseURL,
 		httpClient: &http.Client{

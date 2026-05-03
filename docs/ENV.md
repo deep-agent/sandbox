@@ -12,7 +12,6 @@
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `WORKSPACE` | `/home/sandbox/workspaces` | 沙箱工作目录,所有用户文件读写的根路径 |
 | `SANDBOX_SRV_PORT` | `8000` | 主 HTTP 服务端口 |
 | `MCP_HUB_PORT` | `8001` | MCP Hub 服务端口 |
 
@@ -87,7 +86,6 @@
 只需关心 **1.1 / 1.2** 两节:
 
 ```bash
-export WORKSPACE=/tmp/sandbox-ws
 export SANDBOX_SRV_PORT=8000
 export JWT_SECRET=your-shared-secret   # 需要鉴权时
 ./sandbox
@@ -113,11 +111,8 @@ HTTP_PROXY=http://proxy:8080 HTTPS_PROXY=http://proxy:8080 make build
 
 ## 五、已知问题与建议
 
-1. **`WORKSPACE` 与 `LOCAL_MEMORY` 属于两套坐标系**,不要互相替代:
-   - `WORKSPACE` 是**容器内绝对路径**(Go 程序读取),固定为 `/home/sandbox/workspaces`
-   - `LOCAL_MEMORY` 是**宿主机挂载路径**(compose 使用),对应 `${LOCAL_MEMORY}/workspaces` 目录
-   - 两者通过 `docker-compose.yaml` 的 volume 关联:`${LOCAL_MEMORY}/workspaces:/home/sandbox/workspaces`
-2. **JWT 默认关闭**:`.env.example` 中 `JWT_SECRET` / `JWT_AUTH_REQUIRED` 均留空,部署方自行决定是否开启。强制开启方式:设置 `JWT_SECRET=<密钥>` + `JWT_AUTH_REQUIRED=true`
+1. **`LOCAL_MEMORY` 是宿主机挂载路径**（compose 使用），对应 `${LOCAL_MEMORY}/workspaces` 目录，通过 `docker-compose.yaml` 的 volume 映射到容器内 `/home/sandbox/workspaces`。
+2. **JWT 默认关闭**：`.env.example` 中 `JWT_SECRET` / `JWT_AUTH_REQUIRED` 均留空，部署方自行决定是否开启。强制开启方式：设置 `JWT_SECRET=<密钥>` + `JWT_AUTH_REQUIRED=true`
 3. **示例程序变量已隔离**:`ARK_API_KEY` / `ARK_MODEL` / `MCP_URL` 仅在 `examples/web/` 下使用,配置模板位于 `examples/web/.env.example`,不要混入根目录 `.env`
 4. **部分内部端口是硬编码的,环境变量改不动**:以下端口在配置文件中直接写死,修改 env 不生效,需要同步改配置文件后重建镜像:
 

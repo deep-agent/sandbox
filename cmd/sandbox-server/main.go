@@ -10,7 +10,6 @@ func main() {
 	cfg := config.Load()
 
 	logger.Printf("Starting Sandbox Server on port %d", cfg.SandboxServerPort)
-	logger.Printf("Workspace: %s", cfg.Workspace)
 
 	router := api.NewRouter(cfg)
 	router.Setup()

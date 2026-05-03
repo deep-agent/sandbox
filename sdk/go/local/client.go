@@ -33,15 +33,20 @@ func WithSandboxContext(ctx *model.SandboxContext) Option {
 	}
 }
 
-func NewClient(workDir string, opts ...Option) *Client {
+func NewClient(opts ...Option) *Client {
+	fileManager := filesystem.NewManager()
+	home, err := fileManager.UserHomeDir()
+	if err != nil {
+		home = "/home"
+	}
 	c := &Client{
 		bashExecutor: bash.NewExecutor(),
-		fileManager:  filesystem.NewManager(),
+		fileManager:  fileManager,
 		jsonlService: jsonl.NewService(),
 		webFetcher:   web.NewFetcher(),
 		webSearcher:  web.NewSearcher(),
 		sandboxCtx: &model.SandboxContext{
-			Workspace: workDir,
+			HomeDir:   home,
 			OS:        runtime.GOOS,
 			Arch:      runtime.GOARCH,
 			OSVersion: getOSVersion(),

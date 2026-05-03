@@ -127,7 +127,6 @@ Environment variables (runtime)
 
 Key environment variables for the sandbox container:
 
-- `WORKSPACE`: workspace directory (default `/home/sandbox/workspaces`).
 - `SUPERVISOR_CONF_DIR`: Supervisord config directory (default `/home/sandbox/app.supervisor.d`).
 - `SANDBOX_SRV_PORT`: HTTP/WebSocket port for `sandbox-server` (default `8000`).
 - `MCP_HUB_PORT`: port for the MCP hub (default `8001`).

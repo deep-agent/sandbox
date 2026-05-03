@@ -8,18 +8,17 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/deep-agent/sandbox/internal/services/terminal"
+	"github.com/deep-agent/sandbox/pkg/ctxutil"
 	"github.com/deep-agent/sandbox/pkg/logger"
 	"github.com/hertz-contrib/websocket"
 )
 
 type TerminalHandler struct {
-	workspace string
-	upgrader  *websocket.HertzUpgrader
+	upgrader *websocket.HertzUpgrader
 }
 
-func NewTerminalHandler(workspace string) *TerminalHandler {
+func NewTerminalHandler() *TerminalHandler {
 	return &TerminalHandler{
-		workspace: workspace,
 		upgrader: &websocket.HertzUpgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -39,7 +38,7 @@ func (h *TerminalHandler) HandleWebSocket(ctx context.Context, c *app.RequestCon
 	err := h.upgrader.Upgrade(c, func(conn *websocket.Conn) {
 		defer conn.Close()
 
-		term, err := terminal.New("/bin/bash", h.workspace, nil)
+		term, err := terminal.New("/bin/bash", ctxutil.HomeDir(), nil)
 		if err != nil {
 			logger.Printf("Failed to create terminal: %v", err)
 			if writeErr := conn.WriteJSON(map[string]string{"type": "error", "data": err.Error()}); writeErr != nil {

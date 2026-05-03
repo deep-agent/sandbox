@@ -5,8 +5,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"os"
-
-	"github.com/deep-agent/sandbox/types/consts"
 )
 
 type cwdKey struct{}
@@ -23,7 +21,15 @@ func GetCwd(ctx context.Context) string {
 	if cwd, ok := ctx.Value(cwdKey{}).(string); ok {
 		return cwd
 	}
-	return os.Getenv(consts.Workspace)
+	return HomeDir()
+}
+
+func HomeDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "/home"
+	}
+	return home
 }
 
 func WithLogID(ctx context.Context, logID string) context.Context {
