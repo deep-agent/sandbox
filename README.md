@@ -29,15 +29,25 @@ make docker-start
 - **MCP**: http://localhost:8080/mcp
 - **Health**: http://localhost:8080/health
 
+### Local Development (without Docker)
+
+Run `sandbox-server` and `mcp-hub` on the host, merge stdout/stderr into a single log, and tail it:
+
+```bash
+make run-all      # build, start both services, tail merged log at /tmp/sandbox.log
+make stop-all     # stop both services
+make tail-log     # re-attach to the merged log
+```
+
 ## Architecture
 
 <img alt="cover" src="https://upload-images.jianshu.io/upload_images/12321605-f74f67020c334759.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
 
 **Two Integration Methods**:
 
-- **MCP Hub**: Built-in MCP protocol service providing standardized Tool interfaces (bash, file, browser, etc.). Directly integrates with AI models supporting MCP like Claude and OpenAI. Combined with the [Eino](https://github.com/cloudwego/eino) framework, you can implement a complete ReAct Agent with just a few lines of code.
+- **MCP Hub**: Built-in MCP protocol service providing standardized Tool interfaces (bash, file, web, etc.). Directly integrates with AI models supporting MCP like Claude and OpenAI. Combined with the [Eino](https://github.com/cloudwego/eino) framework, you can implement a complete ReAct Agent with just a few lines of code.
 
-- **Sandbox SDK**: Provides a Go SDK for programmatic access to Bash, FileSystem, Browser, and other services. Can be wrapped as Tools for AI Agent calls or used directly for product development (file browser, Git management, LSP services, etc.).
+- **Sandbox SDK**: Provides a Go SDK for programmatic access to Bash, FileSystem, Grep, Web, JSONL, and other services. Can be wrapped as Tools for AI Agent calls or used directly for product development (file browser, Git management, LSP services, etc.).
 
 ## Project Structure
 
@@ -49,12 +59,12 @@ sandbox/
 ├── internal/
 │   ├── api/
 │   │   ├── router.go             # Router configuration
-│   │   ├── middleware/           # JWT auth, Logger
-│   │   └── handlers/             # Bash/File/Browser/Terminal/Web API
+│   │   ├── middleware/           # JWT auth, Logger, Context
+│   │   └── handlers/             # Bash/File/Grep/JSONL/Terminal/Web/WS/Sandbox/Swagger
 │   ├── services/
 │   │   ├── bash/                 # Bash command execution
 │   │   ├── filesystem/           # Filesystem operations (manager, glob, grep, read, write, replacer, operations)
-│   │   ├── browser/              # Browser control (CDP)
+│   │   ├── jsonl/                # JSONL append / read / count
 │   │   ├── terminal/             # Web terminal (PTY)
 │   │   └── web/                  # Web services (fetch, search)
 │   ├── mcp/
@@ -64,7 +74,7 @@ sandbox/
 │   └── config/config.go
 ├── types/
 │   ├── consts/                   # Constants (env, headers)
-│   └── model/                    # Shared data models (bash, browser, file, grep, web, response)
+│   └── model/                    # Shared data models (bash, file, grep, web, jsonl, response)
 ├── pkg/
 │   ├── ctxutil/                  # Context utilities (workspace path, session)
 │   ├── logger/                   # Plain-text logger wrapper
@@ -77,15 +87,13 @@ sandbox/
 │   │   └── entrypoint.sh
 │   └── volumes/                  # Volume mount examples
 ├── docs/
-│   ├── tools.json                # MCP Tools documentation
-│   └── web_tools.json            # Web Tools documentation
+│   └── ENV.md                    # Environment variables reference
 ├── web/
 │   ├── index.html                # Web homepage
 │   └── terminal/index.html       # Web terminal frontend (xterm.js)
 ├── sdk/
-│   └── go/                       # Go SDK (sandbox, interface, bash, file, browser, grep)
+│   └── go/                       # Go SDK (bash, file, grep, web, jsonl)
 ├── examples/
-│   ├── cdp/                      # CDP examples
 │   ├── filesystem/               # Filesystem examples
 │   └── web/                      # Web examples
 ├── docker-compose.yaml
@@ -102,7 +110,7 @@ sandbox/
 | MCP Hub | 8001 | MCP protocol service |
 | noVNC | 6080 | VNC Web client |
 | VNC Server | 5900 | VNC service |
-| Chromium CDP | 9222 | Chrome DevTools Protocol |
+| Chromium CDP | 9222 | Chrome DevTools Protocol (internal, used by agent-browser) |
 
 ## Process Management (Supervisord)
 
@@ -115,7 +123,7 @@ The container manages 8 processes via Supervisord, started in priority order:
 | 3 | x11vnc | `x11vnc -display :99 -forever -shared -rfbport 5900 -nopw` | 300 | VNC server, shares virtual display to port 5900 |
 | 4 | websockify | `websockify --web=/usr/share/novnc 6080 localhost:5900` | 400 | WebSocket proxy, enables noVNC web access |
 | 5 | chromium | `chromium-browser --no-sandbox --remote-debugging-port=9222 ...` | 500 | Chromium browser with CDP remote debugging |
-| 6 | sandbox-server | `sandbox-server` | 600 | Sandbox main service (Bash/File/Browser API) |
+| 6 | sandbox-server | `sandbox-server` | 600 | Sandbox main service (Bash/File/Grep/JSONL/Web API) |
 | 7 | mcp-hub | `mcp-hub` | 700 | MCP Hub service (MCP protocol + Tool interfaces) |
 | 8 | nginx | `nginx -g "daemon off;"` | 800 | Nginx reverse proxy gateway |
 
@@ -123,7 +131,7 @@ The container manages 8 processes via Supervisord, started in priority order:
 
 **Architecture Notes**:
 - Programs 1-4 form the **VNC Remote Desktop** stack, allowing browser access to virtual desktop
-- Program 5 is the **Chromium Browser**, supporting CDP protocol for automation
+- Program 5 is the **Chromium Browser**, used internally (e.g. by the external agent-browser) via CDP port 9222
 - Programs 6-7 are **Business Services**, providing API and MCP protocol
 - Program 8 is the **Gateway**, unified external service exposure
 
@@ -151,31 +159,25 @@ The container manages 8 processes via Supervisord, started in priority order:
 |----------|--------|-------------|
 | `/v1/file/read` | POST | Read file |
 | `/v1/file/write` | POST | Write file |
+| `/v1/file/append` | POST | Append to file |
 | `/v1/file/list` | POST | List directory |
 | `/v1/file/delete` | POST | Delete file |
 | `/v1/file/move` | POST | Move file |
 | `/v1/file/copy` | POST | Copy file |
 | `/v1/file/mkdir` | POST | Create directory |
 | `/v1/file/exists` | GET | Check if file exists |
+| `/v1/file/stat` | POST | Get file metadata |
+| `/v1/file/upload` | POST | Upload file (multipart) |
+| `/v1/file/download` | GET | Download file (inline preview for browsers) |
 | `/v1/grep/search` | POST | Grep search file content |
 
-### Browser
+### JSONL
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/v1/browser/info` | GET | Get browser info (CDP URL) |
-| `/v1/browser/navigate` | POST | Navigate to URL |
-| `/v1/browser/screenshot` | POST | Browser screenshot |
-| `/v1/browser/click` | POST | Click element |
-| `/v1/browser/type` | POST | Type text |
-| `/v1/browser/evaluate` | POST | Execute JavaScript |
-| `/v1/browser/url` | GET | Get current URL |
-| `/v1/browser/title` | GET | Get page title |
-| `/v1/browser/scroll` | POST | Scroll page |
-| `/v1/browser/html` | POST | Get element HTML |
-| `/v1/browser/wait` | POST | Wait for element visible |
-| `/v1/browser/page` | GET | Get page info |
-| `/v1/browser/pdf` | POST | Export PDF |
+| `/v1/jsonl/count` | POST | Count lines in a JSONL file |
+| `/v1/jsonl/read` | POST | Read lines from a JSONL file |
+| `/v1/jsonl/append` | POST | Append line(s) to a JSONL file |
 
 ### Web
 
@@ -189,8 +191,8 @@ The container manages 8 processes via Supervisord, started in priority order:
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/mcp` | WebSocket | MCP protocol endpoint |
-| `/vnc/` | WebSocket | VNC remote desktop |
-| `/terminal/` | GET | Web terminal |
+| `/websockify` | WebSocket | VNC (noVNC) remote desktop proxy |
+| `/terminal/` | GET | Web terminal page |
 | `/v1/terminal/ws` | WebSocket | Terminal WebSocket connection |
 | `/v1/ws` | WebSocket | General WebSocket interface |
 
@@ -224,19 +226,15 @@ func main() {
     })
     fmt.Println(content.Content)
 
-    // Browser screenshot
-    screenshot, _ := client.BrowserScreenshot(&model.BrowserScreenshotRequest{
-        Full: true,
-    })
-    fmt.Println("Screenshot (base64):", screenshot.Screenshot[:100])
-
-    // Get browser info
-    info, _ := client.BrowserGetInfo()
-    fmt.Printf("CDP URL: %s\n", info.CDPURL)
-
     // Check if file exists
     exists, _ := client.FileExists("/home/sandbox/.bashrc")
     fmt.Printf("File exists: %v\n", exists.Exists)
+
+    // Append to a JSONL file
+    _ = client.JSONLAppendLine(&model.JSONLAppendRequest{
+        File:       "/home/sandbox/workspaces/events.jsonl",
+        JSONString: []string{`{"event":"hello"}`},
+    })
 }
 ```
 
@@ -248,36 +246,19 @@ MCP Hub provides the following tools:
 
 | Tool | Description |
 |------|-------------|
-| `bash` | Execute Bash command |
-| `glob` | File glob matching |
-| `grep` | File content search |
-| `read` | Read file content |
-| `write` | Write file content |
-| `edit` | Edit file (search & replace) |
-
-### Browser
-
-| Tool | Description |
-|------|-------------|
-| `browser_navigate` | Navigate to URL |
-| `browser_screenshot` | Browser screenshot |
-| `browser_click` | Click element |
-| `browser_type` | Type text |
-| `browser_get_url` | Get current URL |
-| `browser_get_title` | Get page title |
-| `browser_get_html` | Get element HTML |
-| `browser_evaluate` | Execute JavaScript |
-| `browser_scroll` | Scroll page |
-| `browser_wait_visible` | Wait for element visible |
-| `browser_get_page_info` | Get page info |
-| `browser_pdf` | Export PDF |
+| `Bash` | Execute Bash command |
+| `Glob` | File glob matching |
+| `Grep` | File content search |
+| `Read` | Read file content |
+| `Write` | Write file content |
+| `Edit` | Edit file (search & replace) |
 
 ### Web
 
 | Tool | Description |
 |------|-------------|
-| `web_fetch` | Fetch web content |
-| `web_search` | Web search |
+| `WebFetch` | Fetch web content |
+| `WebSearch` | Web search |
 
 ## Environment Variables
 
