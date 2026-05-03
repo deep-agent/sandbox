@@ -240,3 +240,31 @@ func (c *Client) FileStat(req *model.FileStatRequest) (*model.FileStatResult, er
 
 	return &result, nil
 }
+
+func (c *Client) TempDir() (*model.TempDirResult, error) {
+	resp, err := c.doRequest("GET", "/v1/file/temp-dir", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var result model.TempDirResult
+	if err := json.Unmarshal(resp.Data, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal result: %w", err)
+	}
+
+	return &result, nil
+}
+
+func (c *Client) UserHomeDir() (*model.UserHomeDirResult, error) {
+	resp, err := c.doRequest("GET", "/v1/file/home-dir", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var result model.UserHomeDirResult
+	if err := json.Unmarshal(resp.Data, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal result: %w", err)
+	}
+
+	return &result, nil
+}

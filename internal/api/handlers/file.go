@@ -458,6 +458,25 @@ func (h *FileHandler) Stat(ctx context.Context, c *app.RequestContext) {
 	c.JSON(http.StatusOK, model.Response{Code: consts.CodeSuccess, Data: result})
 }
 
+func (h *FileHandler) TempDir(ctx context.Context, c *app.RequestContext) {
+	c.JSON(http.StatusOK, model.Response{
+		Code: consts.CodeSuccess,
+		Data: model.TempDirResult{Path: h.manager.TempDir()},
+	})
+}
+
+func (h *FileHandler) UserHomeDir(ctx context.Context, c *app.RequestContext) {
+	home, err := h.manager.UserHomeDir()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.Response{Code: consts.CodeInternal, Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, model.Response{
+		Code: consts.CodeSuccess,
+		Data: model.UserHomeDirResult{Path: home},
+	})
+}
+
 func detectContentType(filePath string, content []byte) string {
 	// Try extension-based detection first for accuracy
 	ext := strings.ToLower(filepath.Ext(filePath))

@@ -114,3 +114,11 @@ type FileStatResult struct {
 	Mode        string `json:"mode"`
 	ModTimeUnix int64  `json:"mod_time_unix"`
 }
+
+type TempDirResult struct {
+	Path string `json:"path"`
+}
+
+type UserHomeDirResult struct {
+	Path string `json:"path"`
+}

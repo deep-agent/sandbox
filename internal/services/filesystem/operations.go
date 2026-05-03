@@ -188,3 +188,15 @@ func (m *Manager) EvalSymlinks(path string) (string, error) {
 	}
 	return resolved, nil
 }
+
+func (m *Manager) TempDir() string {
+	return os.TempDir()
+}
+
+func (m *Manager) UserHomeDir() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get user home dir: %w", err)
+	}
+	return home, nil
+}

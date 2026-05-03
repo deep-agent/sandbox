@@ -158,6 +158,18 @@ func (c *Client) FileStat(req *model.FileStatRequest) (*model.FileStatResult, er
 	return c.fileManager.Stat(req.Path)
 }
 
+func (c *Client) TempDir() (*model.TempDirResult, error) {
+	return &model.TempDirResult{Path: c.fileManager.TempDir()}, nil
+}
+
+func (c *Client) UserHomeDir() (*model.UserHomeDirResult, error) {
+	home, err := c.fileManager.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+	return &model.UserHomeDirResult{Path: home}, nil
+}
+
 func localDetectContentType(filePath string, content []byte) string {
 	ext := strings.ToLower(filepath.Ext(filePath))
 	if ct := mime.TypeByExtension(ext); ct != "" {

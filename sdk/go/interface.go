@@ -39,6 +39,8 @@ type FileManager interface {
 	FileEvalSymlinks(req *model.FileEvalSymlinksRequest) (*model.FileEvalSymlinksResult, error)
 	FileAppend(req *model.FileAppendRequest) error
 	FileStat(req *model.FileStatRequest) (*model.FileStatResult, error)
+	TempDir() (*model.TempDirResult, error)
+	UserHomeDir() (*model.UserHomeDirResult, error)
 }
 
 type GrepSearcher interface {

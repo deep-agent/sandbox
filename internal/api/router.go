@@ -90,6 +90,8 @@ func (r *Router) Setup() {
 			fileGroup.POST("/eval-symlinks", fileHandler.EvalSymlinks)
 			fileGroup.POST("/append", fileHandler.Append)
 			fileGroup.POST("/stat", fileHandler.Stat)
+			fileGroup.GET("/temp-dir", fileHandler.TempDir)
+			fileGroup.GET("/home-dir", fileHandler.UserHomeDir)
 		}
 
 		grepGroup := v1.Group("/grep")

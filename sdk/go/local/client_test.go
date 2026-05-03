@@ -525,3 +525,37 @@ func TestGrepSearchCaseInsensitive(t *testing.T) {
 		t.Errorf("expected output to contain matches, got %s", result.Output)
 	}
 }
+
+func TestTempDir(t *testing.T) {
+	client := NewClient("")
+
+	result, err := client.TempDir()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Path == "" {
+		t.Error("expected non-empty temp dir path")
+	}
+	if result.Path != os.TempDir() {
+		t.Errorf("expected %s, got %s", os.TempDir(), result.Path)
+	}
+}
+
+func TestUserHomeDir(t *testing.T) {
+	client := NewClient("")
+
+	result, err := client.UserHomeDir()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Path == "" {
+		t.Error("expected non-empty home dir path")
+	}
+	expected, err := os.UserHomeDir()
+	if err != nil {
+		t.Skipf("os.UserHomeDir unavailable: %v", err)
+	}
+	if result.Path != expected {
+		t.Errorf("expected %s, got %s", expected, result.Path)
+	}
+}
