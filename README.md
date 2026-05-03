@@ -76,7 +76,7 @@ sandbox/
 │   ├── consts/                   # Constants (env, headers)
 │   └── model/                    # Shared data models (bash, file, grep, web, jsonl, response)
 ├── pkg/
-│   ├── ctxutil/                  # Context utilities (workspace path, session)
+│   ├── ctxutil/                  # Context utilities (cwd, log ID)
 │   ├── logger/                   # Plain-text logger wrapper
 │   └── safe/                     # Safety utility functions
 ├── docker/
@@ -203,16 +203,16 @@ package main
 
 import (
     "fmt"
-    sandbox "github.com/deep-agent/sandbox/sdk/go"
+    "github.com/deep-agent/sandbox/sdk/go/http"
     "github.com/deep-agent/sandbox/types/model"
 )
 
 func main() {
-    client := sandbox.NewClient("http://localhost:8080")
+    client := http.NewClient("http://localhost:8080")
 
     // Get sandbox info
     ctx, _ := client.GetContext()
-    fmt.Printf("Workspace: %s\n", ctx.Workspace)
+    fmt.Printf("HomeDir: %s\n", ctx.HomeDir)
 
     // Execute Bash command
     result, _ := client.BashExec(&model.BashExecRequest{

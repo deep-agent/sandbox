@@ -76,8 +76,8 @@ API handlers and errors:
 - Prefer returning early on error; keep handlers linear.
 
 Filesystem rules:
-- `filesystem.Manager` owns workspace operations and path validation.
-- Path validation uses `filepath.Abs`; be careful to keep workspace boundaries intact if re-enabling checks.
+- `filesystem.Manager` owns file system operations and path validation.
+- Path validation uses `filepath.Abs`; be careful to keep sandbox boundaries intact if re-enabling checks.
 - For read/write ops, return wrapped errors with `fmt.Errorf("...: %w", err)`.
 
 Bash execution:
@@ -111,7 +111,7 @@ Repository map (high level)
 - `internal/mcp`: MCP tool registry and tool handlers.
 - `types/model`: shared API response/request structs.
 - `types/consts`: constants (env variables, HTTP headers).
-- `pkg/ctxutil`: context utilities (workspace path, session ID).
+- `pkg/ctxutil`: context utilities (cwd, log ID).
 - `pkg/logger`: plain-text logger wrapper used across the app.
 - `pkg/safe`: defensive helpers (safe goroutines, recover helpers).
 - `sdk/go`: Go SDK for sandbox API.
@@ -141,6 +141,6 @@ Agent guidance
 
 - Prefer minimal, focused changes that align with existing patterns.
 - Follow existing JSON response shapes and error handling in handlers.
-- Avoid changing workspace path validation semantics unless requested.
+- Avoid changing filesystem path validation semantics unless requested.
 - Update tests when behavior changes; keep tests deterministic.
 - If you need new tooling instructions, update this file and `Makefile` together.

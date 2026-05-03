@@ -204,16 +204,16 @@ package main
 
 import (
     "fmt"
-    sandbox "github.com/deep-agent/sandbox/sdk/go"
+    "github.com/deep-agent/sandbox/sdk/go/http"
     "github.com/deep-agent/sandbox/types/model"
 )
 
 func main() {
-    client := sandbox.NewClient("http://localhost:8080")
+    client := http.NewClient("http://localhost:8080")
 
     // 获取沙箱信息
     ctx, _ := client.GetContext()
-    fmt.Printf("Workspace: %s\n", ctx.Workspace)
+    fmt.Printf("HomeDir: %s\n", ctx.HomeDir)
 
     // 执行 Bash 命令
     result, _ := client.BashExec(&model.BashExecRequest{
