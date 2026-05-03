@@ -9,8 +9,11 @@ Build, lint, test
 Primary make targets (repo root):
 - Build binaries: `make build`
 - Build Linux binaries: `make build-linux`
-- Run sandbox server: `make run-server`
-- Run MCP hub: `make run-mcp`
+- Run sandbox server (foreground): `make run-server`
+- Run MCP hub (foreground): `make run-mcp`
+- Run both services in background with merged log at `/tmp/sandbox.log` and auto-tail: `make run-all`
+- Stop background services started by `run-all`: `make stop-all`
+- Re-attach to the merged log: `make tail-log`
 - Run all tests: `make test`
 - Lint (golangci-lint): `make lint`
 - Format: `make fmt`
@@ -29,10 +32,11 @@ Run a single test:
 - Subtest (if present): `go test ./internal/mcp/tools -run TestReadTool_Handler_SimpleRead/CaseName -v`
 
 Optional Docker workflows:
-- Build image: `make push-to-dockerhub` (multi-arch)
-- Build image (local load): `make docker-build-load`
-- Run image: `make docker-run`
-- Compose up/down: `make docker-compose-up` / `make docker-compose-down`
+- Build & push multi-arch image: `make push-to-dockerhub`
+- Compose up (detached): `make docker-start`
+- Compose restart: `make docker-restart`
+- Compose down: `make docker-down`
+- Debug compose (build + up): `make docker-dev` / `make docker-restart-dev` / `make docker-down-dev`
 
 Notes:
 - Go version: `go 1.25` (see `go.mod`).
@@ -55,7 +59,7 @@ Formatting:
 
 Types and structs:
 - Request payloads are local structs with JSON tags and validation tags (`vd:"len($)>0"`).
-- Response payloads use shared types from `pkg/model` and the `model.Response` wrapper.
+- Response payloads use shared types from `types/model` and the `model.Response` wrapper.
 - Use explicit struct fields rather than `map[string]interface{}` when possible.
 
 Naming:
@@ -102,15 +106,17 @@ Repository map (high level)
 - `cmd/sandbox-server`: main server entrypoint.
 - `cmd/mcp-hub`: MCP hub entrypoint.
 - `internal/api`: HTTP API handlers and router.
-- `internal/api/middleware`: authentication middleware (JWT).
-- `internal/services`: business logic (filesystem, bash, browser, terminal, web).
+- `internal/api/middleware`: authentication, logging, and context middleware.
+- `internal/services`: business logic (bash, filesystem, jsonl, terminal, web).
 - `internal/mcp`: MCP tool registry and tool handlers.
 - `types/model`: shared API response/request structs.
 - `types/consts`: constants (env variables, HTTP headers).
 - `pkg/ctxutil`: context utilities (workspace path, session ID).
+- `pkg/logger`: plain-text logger wrapper used across the app.
+- `pkg/safe`: defensive helpers (safe goroutines, recover helpers).
 - `sdk/go`: Go SDK for sandbox API.
-- `docs`: MCP tools documentation (tools.json, web_tools.json).
-- `examples/*`: separate Go modules with example clients (cdp, filesystem, web).
+- `docs/ENV.md`: environment-variable reference.
+- `examples/*`: separate Go modules with example clients (filesystem, web).
 - `docker/volumes/app.supervisor.d/`: user Supervisord configs (mounted to `/home/sandbox/app.supervisor.d`).
 - `docker/volumes/userdata/`: user scripts/binaries (mounted to `/home/sandbox/userdata`).
 - `docker/volumes/init.d/`: entrypoint init scripts (mounted to `/docker-entrypoint.d`).
@@ -123,8 +129,12 @@ Key environment variables for the sandbox container:
 
 - `WORKSPACE`: workspace directory (default `/home/sandbox/workspaces`).
 - `SUPERVISOR_CONF_DIR`: Supervisord config directory (default `/home/sandbox/app.supervisor.d`).
+- `SANDBOX_SRV_PORT`: HTTP/WebSocket port for `sandbox-server` (default `8000`).
+- `MCP_HUB_PORT`: port for the MCP hub (default `8001`).
 - `JWT_SECRET`: HMAC shared secret for JWT authentication (HS256/384/512). Leave empty to disable auth.
 - `JWT_AUTH_REQUIRED`: set to `true` to reject all requests when `JWT_SECRET` is not configured.
+
+Full list (including docker-compose variables and feature flags) is in `docs/ENV.md`.
 
 -------------------------------------------------------------------------------
 Agent guidance

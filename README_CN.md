@@ -29,6 +29,16 @@ make docker-start
 - **MCP**: http://localhost:8080/mcp
 - **Health**: http://localhost:8080/health
 
+### 本地开发（无需 Docker）
+
+在宿主机直接跑 `sandbox-server` 和 `mcp-hub`，两者 stdout/stderr 合并到同一个日志文件并自动 tail：
+
+```bash
+make run-all      # 编译并启动两个服务，自动 tail 合并日志 /tmp/sandbox.log
+make stop-all     # 停止两个服务
+make tail-log     # 重新 tail 合并日志
+```
+
 ## 系统架构
 
 <img alt="cover" src="https://upload-images.jianshu.io/upload_images/12321605-f74f67020c334759.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
@@ -36,9 +46,9 @@ make docker-start
 
 **两种接入方式**：
 
-- **MCP Hub**：内置 MCP 协议服务，提供标准化的 Tool 接口（bash、file、browser 等），可直接对接 Claude、OpenAI 等支持 MCP 的 AI 模型；结合 [Eino](https://github.com/cloudwego/eino) 框架，几行代码即可实现完整的 ReAct Agent。
+- **MCP Hub**：内置 MCP 协议服务，提供标准化的 Tool 接口（bash、file、web 等），可直接对接 Claude、OpenAI 等支持 MCP 的 AI 模型；结合 [Eino](https://github.com/cloudwego/eino) 框架，几行代码即可实现完整的 ReAct Agent。
 
-- **Sandbox SDK**：提供 Go SDK，通过编程方式调用 Bash、FileSystem、Browser 等服务。既可封装为 Tool 供 AI Agent 调用，也可直接用于产品功能开发（如文件浏览器、Git 管理、LSP 服务等）。
+- **Sandbox SDK**：提供 Go SDK，通过编程方式调用 Bash、FileSystem、Grep、Web、JSONL 等服务。既可封装为 Tool 供 AI Agent 调用，也可直接用于产品功能开发（如文件浏览器、Git 管理、LSP 服务等）。
 
 ## 项目结构
 
@@ -50,12 +60,12 @@ sandbox/
 ├── internal/
 │   ├── api/
 │   │   ├── router.go             # 路由配置
-│   │   ├── middleware/           # JWT 鉴权、Logger
-│   │   └── handlers/             # Bash/File/Browser/Terminal/Web API
+│   │   ├── middleware/           # JWT 鉴权、Logger、Context
+│   │   └── handlers/             # Bash/File/Grep/JSONL/Terminal/Web/WS/Sandbox/Swagger
 │   ├── services/
 │   │   ├── bash/                 # Bash 命令执行
 │   │   ├── filesystem/           # 文件系统操作 (manager, glob, grep, read, write, replacer, operations)
-│   │   ├── browser/              # 浏览器控制 (CDP)
+│   │   ├── jsonl/                # JSONL 追加 / 读取 / 计数
 │   │   ├── terminal/             # 网页终端 (PTY)
 │   │   └── web/                  # Web 服务 (fetch, search)
 │   ├── mcp/
@@ -65,9 +75,10 @@ sandbox/
 │   └── config/config.go
 ├── types/
 │   ├── consts/                   # 常量定义 (env, headers)
-│   └── model/                    # 共享数据模型 (bash, browser, file, grep, web, response)
+│   └── model/                    # 共享数据模型 (bash, file, grep, web, jsonl, response)
 ├── pkg/
 │   ├── ctxutil/                  # Context 工具 (工作目录、会话)
+│   ├── logger/                   # 纯文本日志封装
 │   └── safe/                     # 安全工具函数
 ├── docker/
 │   ├── Dockerfile
@@ -77,15 +88,13 @@ sandbox/
 │   │   └── entrypoint.sh
 │   └── volumes/                  # 挂载卷示例
 ├── docs/
-│   ├── tools.json                # MCP Tools 文档
-│   └── web_tools.json            # Web Tools 文档
+│   └── ENV.md                    # 环境变量说明
 ├── web/
 │   ├── index.html                # Web 首页
 │   └── terminal/index.html       # 网页终端前端 (xterm.js)
 ├── sdk/
-│   └── go/                       # Go SDK (sandbox, interface, bash, file, browser, grep)
+│   └── go/                       # Go SDK (bash, file, grep, web, jsonl)
 ├── examples/
-│   ├── cdp/                      # CDP 示例
 │   ├── filesystem/               # 文件系统示例
 │   └── web/                      # Web 示例
 ├── docker-compose.yaml
@@ -102,7 +111,7 @@ sandbox/
 | MCP Hub | 8001 | MCP 协议服务 |
 | noVNC | 6080 | VNC Web 客户端 |
 | VNC Server | 5900 | VNC 服务 |
-| Chromium CDP | 9222 | Chrome DevTools Protocol |
+| Chromium CDP | 9222 | Chrome DevTools Protocol（内部使用，供 agent-browser 调用） |
 
 ## 进程管理 (Supervisord)
 
@@ -115,7 +124,7 @@ sandbox/
 | 3 | x11vnc | `x11vnc -display :99 -forever -shared -rfbport 5900 -nopw` | 300 | VNC 服务器，共享虚拟显示器到 5900 端口 |
 | 4 | websockify | `websockify --web=/usr/share/novnc 6080 localhost:5900` | 400 | WebSocket 代理，支持 noVNC 网页访问 |
 | 5 | chromium | `chromium-browser --no-sandbox --remote-debugging-port=9222 ...` | 500 | Chromium 浏览器，启用 CDP 远程调试 |
-| 6 | sandbox-server | `sandbox-server` | 600 | 沙箱主服务 (Bash/File/Browser API) |
+| 6 | sandbox-server | `sandbox-server` | 600 | 沙箱主服务 (Bash/File/Grep/JSONL/Web API) |
 | 7 | mcp-hub | `mcp-hub` | 700 | MCP Hub 服务 (MCP 协议 + Tool 接口) |
 | 8 | nginx | `nginx -g "daemon off;"` | 800 | Nginx 反向代理网关 |
 
@@ -123,7 +132,7 @@ sandbox/
 
 **架构说明**:
 - 程序 1-4 构成 **VNC 远程桌面** 栈，让用户可以通过浏览器访问虚拟桌面
-- 程序 5 是 **Chromium 浏览器**，支持 CDP 协议进行自动化控制
+- 程序 5 是 **Chromium 浏览器**，通过 9222 CDP 端口供内部（例如外置 agent-browser）调用
 - 程序 6-7 是 **业务服务**，提供 API 和 MCP 协议
 - 程序 8 是 **网关**，统一对外暴露服务
 
@@ -151,31 +160,25 @@ sandbox/
 |------|------|------|
 | `/v1/file/read` | POST | 读取文件 |
 | `/v1/file/write` | POST | 写入文件 |
+| `/v1/file/append` | POST | 追加写入文件 |
 | `/v1/file/list` | POST | 列出目录 |
 | `/v1/file/delete` | POST | 删除文件 |
 | `/v1/file/move` | POST | 移动文件 |
 | `/v1/file/copy` | POST | 复制文件 |
 | `/v1/file/mkdir` | POST | 创建目录 |
 | `/v1/file/exists` | GET | 检查文件是否存在 |
+| `/v1/file/stat` | POST | 获取文件元信息 |
+| `/v1/file/upload` | POST | 上传文件 (multipart) |
+| `/v1/file/download` | GET | 下载文件 (浏览器可内联预览) |
 | `/v1/grep/search` | POST | Grep 搜索文件内容 |
 
-### 浏览器
+### JSONL
 
 | 端点 | 方法 | 描述 |
 |------|------|------|
-| `/v1/browser/info` | GET | 获取浏览器信息 (CDP URL) |
-| `/v1/browser/navigate` | POST | 导航到 URL |
-| `/v1/browser/screenshot` | POST | 浏览器截图 |
-| `/v1/browser/click` | POST | 点击元素 |
-| `/v1/browser/type` | POST | 输入文本 |
-| `/v1/browser/evaluate` | POST | 执行 JavaScript |
-| `/v1/browser/url` | GET | 获取当前 URL |
-| `/v1/browser/title` | GET | 获取页面标题 |
-| `/v1/browser/scroll` | POST | 滚动页面 |
-| `/v1/browser/html` | POST | 获取元素 HTML |
-| `/v1/browser/wait` | POST | 等待元素可见 |
-| `/v1/browser/page` | GET | 获取页面信息 |
-| `/v1/browser/pdf` | POST | 导出 PDF |
+| `/v1/jsonl/count` | POST | 统计 JSONL 文件行数 |
+| `/v1/jsonl/read` | POST | 按行读取 JSONL 文件 |
+| `/v1/jsonl/append` | POST | 向 JSONL 文件追加一行或多行 |
 
 ### Web
 
@@ -189,8 +192,8 @@ sandbox/
 | 端点 | 方法 | 描述 |
 |------|------|------|
 | `/mcp` | WebSocket | MCP 协议端点 |
-| `/vnc/` | WebSocket | VNC 远程桌面 |
-| `/terminal/` | GET | 网页终端 |
+| `/websockify` | WebSocket | VNC (noVNC) 远程桌面代理 |
+| `/terminal/` | GET | 网页终端页面 |
 | `/v1/terminal/ws` | WebSocket | 终端 WebSocket 连接 |
 | `/v1/ws` | WebSocket | 通用 WebSocket 接口 |
 
@@ -224,19 +227,15 @@ func main() {
     })
     fmt.Println(content.Content)
 
-    // 浏览器截图
-    screenshot, _ := client.BrowserScreenshot(&model.BrowserScreenshotRequest{
-        Full: true,
-    })
-    fmt.Println("Screenshot (base64):", screenshot.Screenshot[:100])
-
-    // 获取浏览器信息
-    info, _ := client.BrowserGetInfo()
-    fmt.Printf("CDP URL: %s\n", info.CDPURL)
-
     // 检查文件是否存在
     exists, _ := client.FileExists("/home/sandbox/.bashrc")
     fmt.Printf("File exists: %v\n", exists.Exists)
+
+    // 向 JSONL 文件追加一行
+    _ = client.JSONLAppendLine(&model.JSONLAppendRequest{
+        File:       "/home/sandbox/workspaces/events.jsonl",
+        JSONString: []string{`{"event":"hello"}`},
+    })
 }
 ```
 
@@ -248,36 +247,19 @@ MCP Hub 提供以下工具：
 
 | Tool | 描述 |
 |------|------|
-| `bash` | 执行 Bash 命令 |
-| `glob` | 文件 glob 匹配 |
-| `grep` | 文件内容搜索 |
-| `read` | 读取文件内容 |
-| `write` | 写入文件内容 |
-| `edit` | 编辑文件 (搜索替换) |
-
-### 浏览器
-
-| Tool | 描述 |
-|------|------|
-| `browser_navigate` | 导航到 URL |
-| `browser_screenshot` | 浏览器截图 |
-| `browser_click` | 点击元素 |
-| `browser_type` | 输入文本 |
-| `browser_get_url` | 获取当前 URL |
-| `browser_get_title` | 获取页面标题 |
-| `browser_get_html` | 获取元素 HTML |
-| `browser_evaluate` | 执行 JavaScript |
-| `browser_scroll` | 滚动页面 |
-| `browser_wait_visible` | 等待元素可见 |
-| `browser_get_page_info` | 获取页面信息 |
-| `browser_pdf` | 导出 PDF |
+| `Bash` | 执行 Bash 命令 |
+| `Glob` | 文件 glob 匹配 |
+| `Grep` | 文件内容搜索 |
+| `Read` | 读取文件内容 |
+| `Write` | 写入文件内容 |
+| `Edit` | 编辑文件 (搜索替换) |
 
 ### Web
 
 | Tool | 描述 |
 |------|------|
-| `web_fetch` | 抓取网页内容 |
-| `web_search` | 网页搜索 |
+| `WebFetch` | 抓取网页内容 |
+| `WebSearch` | 网页搜索 |
 
 ## 环境变量
 
