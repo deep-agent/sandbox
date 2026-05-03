@@ -300,3 +300,62 @@ func TestMkDirAlreadyExists(t *testing.T) {
 		t.Fatalf("MkDir() should not error for existing directory, got: %v", err)
 	}
 }
+
+func TestAppendFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager()
+	filePath := filepath.Join(tmpDir, "append.txt")
+
+	if err := m.AppendFile(filePath, "hello"); err != nil {
+		t.Fatalf("AppendFile() first error = %v", err)
+	}
+	if err := m.AppendFile(filePath, " world"); err != nil {
+		t.Fatalf("AppendFile() second error = %v", err)
+	}
+
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("read appended file: %v", err)
+	}
+	if string(content) != "hello world" {
+		t.Fatalf("expected hello world, got %q", string(content))
+	}
+}
+
+func TestStat(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager()
+	filePath := filepath.Join(tmpDir, "stat.txt")
+	if err := os.WriteFile(filePath, []byte("12345"), 0644); err != nil {
+		t.Fatalf("create stat file: %v", err)
+	}
+
+	result, err := m.Stat(filePath)
+	if err != nil {
+		t.Fatalf("Stat() error = %v", err)
+	}
+	if !result.Exists || result.IsDir || result.Size != 5 {
+		t.Fatalf("unexpected stat result: %+v", result)
+	}
+}
+
+func TestEvalSymlinks(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager()
+	target := filepath.Join(tmpDir, "target.txt")
+	link := filepath.Join(tmpDir, "link.txt")
+	if err := os.WriteFile(target, []byte("target"), 0644); err != nil {
+		t.Fatalf("create target: %v", err)
+	}
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatalf("create symlink: %v", err)
+	}
+
+	resolved, err := m.EvalSymlinks(link)
+	if err != nil {
+		t.Fatalf("EvalSymlinks() error = %v", err)
+	}
+	if resolved != target {
+		t.Fatalf("expected resolved path %q, got %q", target, resolved)
+	}
+}

@@ -180,6 +180,48 @@ func (c *Client) FileDownload(filePath string) (io.ReadCloser, string, error) {
 	return resp.Body, contentType, nil
 }
 
+func (c *Client) FileCreateTemp(req *model.FileCreateTempRequest) (*model.FileCreateTempResult, error) {
+	resp, err := c.doRequest("POST", "/v1/file/create-temp", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var result model.FileCreateTempResult
+	if err := json.Unmarshal(resp.Data, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal result: %w", err)
+	}
+
+	return &result, nil
+}
+
+func (c *Client) FileGlob(req *model.FileGlobRequest) (*model.FileGlobResult, error) {
+	resp, err := c.doRequest("POST", "/v1/file/glob", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var result model.FileGlobResult
+	if err := json.Unmarshal(resp.Data, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal result: %w", err)
+	}
+
+	return &result, nil
+}
+
+func (c *Client) FileEvalSymlinks(req *model.FileEvalSymlinksRequest) (*model.FileEvalSymlinksResult, error) {
+	resp, err := c.doRequest("POST", "/v1/file/eval-symlinks", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var result model.FileEvalSymlinksResult
+	if err := json.Unmarshal(resp.Data, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal result: %w", err)
+	}
+
+	return &result, nil
+}
+
 func (c *Client) FileAppend(req *model.FileAppendRequest) error {
 	_, err := c.doRequest("POST", "/v1/file/append", req)
 	return err

@@ -1,10 +1,152 @@
 package filesystem
 
 import (
+	"encoding/base64"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 )
+
+func TestWriteFileWithMode(t *testing.T) {
+	tmpDir := t.TempDir()
+	manager := NewManager()
+	testFile := filepath.Join(tmpDir, "mode.txt")
+
+	if err := manager.WriteFile(testFile, "content", WriteOptions{Mode: 0600}); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	info, err := os.Stat(testFile)
+	if err != nil {
+		t.Fatalf("stat file: %v", err)
+	}
+	if info.Mode().Perm() != 0600 {
+		t.Fatalf("expected perm 0600, got %o", info.Mode().Perm())
+	}
+}
+
+func TestWriteFileAtomic(t *testing.T) {
+	tmpDir := t.TempDir()
+	manager := NewManager()
+	testFile := filepath.Join(tmpDir, "atomic.txt")
+
+	if err := manager.WriteFile(testFile, "atomic content", WriteOptions{Atomic: true, Mode: 0640}); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	content, err := os.ReadFile(testFile)
+	if err != nil {
+		t.Fatalf("read file: %v", err)
+	}
+	if string(content) != "atomic content" {
+		t.Fatalf("expected atomic content, got %q", string(content))
+	}
+	info, err := os.Stat(testFile)
+	if err != nil {
+		t.Fatalf("stat file: %v", err)
+	}
+	if info.Mode().Perm() != 0640 {
+		t.Fatalf("expected perm 0640, got %o", info.Mode().Perm())
+	}
+}
+
+func TestWriteFileAtomicPreservesExistingMode(t *testing.T) {
+	tmpDir := t.TempDir()
+	manager := NewManager()
+	testFile := filepath.Join(tmpDir, "preserve.txt")
+
+	if err := os.WriteFile(testFile, []byte("orig"), 0600); err != nil {
+		t.Fatalf("seed file: %v", err)
+	}
+
+	if err := manager.WriteFile(testFile, "overwrite", WriteOptions{Atomic: true}); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	info, err := os.Stat(testFile)
+	if err != nil {
+		t.Fatalf("stat file: %v", err)
+	}
+	if info.Mode().Perm() != 0600 {
+		t.Fatalf("atomic write without Mode must preserve existing perm 0600, got %o", info.Mode().Perm())
+	}
+}
+
+func TestWriteFileBase64WithAtomicAndMode(t *testing.T) {
+	tmpDir := t.TempDir()
+	manager := NewManager()
+	testFile := filepath.Join(tmpDir, "atomic-base64.txt")
+	encoded := base64.StdEncoding.EncodeToString([]byte("hello"))
+
+	if err := manager.WriteFileBase64(testFile, encoded, WriteOptions{Atomic: true, Mode: 0600}); err != nil {
+		t.Fatalf("WriteFileBase64() error = %v", err)
+	}
+
+	content, err := os.ReadFile(testFile)
+	if err != nil {
+		t.Fatalf("read file: %v", err)
+	}
+	if string(content) != "hello" {
+		t.Fatalf("expected hello, got %q", string(content))
+	}
+}
+
+func TestCreateTempFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	manager := NewManager()
+
+	name, err := manager.CreateTempFile(tmpDir, "sandbox-*.txt", []byte("tmp"), 0700)
+	if err != nil {
+		t.Fatalf("CreateTempFile() error = %v", err)
+	}
+
+	content, err := os.ReadFile(name)
+	if err != nil {
+		t.Fatalf("read temp file: %v", err)
+	}
+	if string(content) != "tmp" {
+		t.Fatalf("expected tmp, got %q", string(content))
+	}
+	info, err := os.Stat(name)
+	if err != nil {
+		t.Fatalf("stat temp file: %v", err)
+	}
+	if info.Mode().Perm() != 0700 {
+		t.Fatalf("expected perm 0700, got %o", info.Mode().Perm())
+	}
+}
+
+func TestCreateTempFileBase64(t *testing.T) {
+	tmpDir := t.TempDir()
+	manager := NewManager()
+	encoded := base64.StdEncoding.EncodeToString([]byte("hello"))
+
+	name, err := manager.CreateTempFileBase64(tmpDir, "b64-*.txt", encoded, 0600)
+	if err != nil {
+		t.Fatalf("CreateTempFileBase64() error = %v", err)
+	}
+	content, err := os.ReadFile(name)
+	if err != nil {
+		t.Fatalf("read temp file: %v", err)
+	}
+	if string(content) != "hello" {
+		t.Fatalf("expected hello, got %q", string(content))
+	}
+}
+
+func TestCreateTempFileBase64Invalid(t *testing.T) {
+	tmpDir := t.TempDir()
+	manager := NewManager()
+
+	_, err := manager.CreateTempFileBase64(tmpDir, "b64-*.txt", "!!!not-base64!!!", 0)
+	if err == nil {
+		t.Fatalf("expected error for invalid base64")
+	}
+	if !errors.Is(err, ErrInvalidBase64) {
+		t.Fatalf("expected ErrInvalidBase64, got %v", err)
+	}
+}
 
 func TestEditFile(t *testing.T) {
 	tmpDir := t.TempDir()

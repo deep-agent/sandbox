@@ -78,6 +78,7 @@ func (r *Router) Setup() {
 			fileGroup.POST("/read", fileHandler.ReadFile)
 			fileGroup.POST("/write", fileHandler.WriteFile)
 			fileGroup.POST("/list", fileHandler.ListDir)
+			fileGroup.POST("/glob", fileHandler.Glob)
 			fileGroup.POST("/delete", fileHandler.DeleteFile)
 			fileGroup.POST("/move", fileHandler.MoveFile)
 			fileGroup.POST("/copy", fileHandler.CopyFile)
@@ -85,6 +86,10 @@ func (r *Router) Setup() {
 			fileGroup.GET("/exists", fileHandler.Exists)
 			fileGroup.POST("/upload", fileHandler.Upload)
 			fileGroup.GET("/download", fileHandler.Download)
+			fileGroup.POST("/create-temp", fileHandler.CreateTemp)
+			fileGroup.POST("/eval-symlinks", fileHandler.EvalSymlinks)
+			fileGroup.POST("/append", fileHandler.Append)
+			fileGroup.POST("/stat", fileHandler.Stat)
 		}
 
 		grepGroup := v1.Group("/grep")

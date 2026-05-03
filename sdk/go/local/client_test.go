@@ -362,6 +362,103 @@ func TestFileExists(t *testing.T) {
 	}
 }
 
+func TestFileWriteAtomicAndMode(t *testing.T) {
+	workDir := t.TempDir()
+	client := NewClient(workDir)
+	testFile := filepath.Join(workDir, "atomic.txt")
+
+	err := client.FileWrite(&model.FileWriteRequest{File: testFile, Content: "atomic", Atomic: true, Mode: 0600})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	info, err := os.Stat(testFile)
+	if err != nil {
+		t.Fatalf("stat file: %v", err)
+	}
+	if info.Mode().Perm() != 0600 {
+		t.Fatalf("expected perm 0600, got %o", info.Mode().Perm())
+	}
+}
+
+func TestFileCreateTemp(t *testing.T) {
+	workDir := t.TempDir()
+	client := NewClient(workDir)
+
+	result, err := client.FileCreateTemp(&model.FileCreateTempRequest{Dir: workDir, Pattern: "shell-*.sh", Content: "echo hi", Mode: 0700})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	content, err := os.ReadFile(result.File)
+	if err != nil {
+		t.Fatalf("read temp file: %v", err)
+	}
+	if string(content) != "echo hi" {
+		t.Fatalf("expected echo hi, got %q", string(content))
+	}
+}
+
+func TestFileGlob(t *testing.T) {
+	workDir := t.TempDir()
+	client := NewClient(workDir)
+	if err := os.WriteFile(filepath.Join(workDir, "a.go"), []byte("package main"), 0644); err != nil {
+		t.Fatalf("create a.go: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workDir, "b.txt"), []byte("txt"), 0644); err != nil {
+		t.Fatalf("create b.txt: %v", err)
+	}
+
+	result, err := client.FileGlob(&model.FileGlobRequest{Path: workDir, Pattern: "*.go"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Count != 1 || len(result.Files) != 1 || filepath.Base(result.Files[0]) != "a.go" {
+		t.Fatalf("unexpected glob result: %+v", result)
+	}
+}
+
+func TestFileEvalSymlinks(t *testing.T) {
+	workDir := t.TempDir()
+	client := NewClient(workDir)
+	target := filepath.Join(workDir, "target.txt")
+	link := filepath.Join(workDir, "link.txt")
+	if err := os.WriteFile(target, []byte("target"), 0644); err != nil {
+		t.Fatalf("create target: %v", err)
+	}
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatalf("create symlink: %v", err)
+	}
+
+	result, err := client.FileEvalSymlinks(&model.FileEvalSymlinksRequest{Path: link})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.ResolvedPath != target {
+		t.Fatalf("expected resolved path %q, got %q", target, result.ResolvedPath)
+	}
+}
+
+func TestFileAppendAndStat(t *testing.T) {
+	workDir := t.TempDir()
+	client := NewClient(workDir)
+	testFile := filepath.Join(workDir, "append-stat.txt")
+
+	if err := client.FileAppend(&model.FileAppendRequest{File: testFile, Content: "abc"}); err != nil {
+		t.Fatalf("append failed: %v", err)
+	}
+	if err := client.FileAppend(&model.FileAppendRequest{File: testFile, Content: "def"}); err != nil {
+		t.Fatalf("append failed: %v", err)
+	}
+	result, err := client.FileStat(&model.FileStatRequest{Path: testFile})
+	if err != nil {
+		t.Fatalf("stat failed: %v", err)
+	}
+	if !result.Exists || result.Size != 6 {
+		t.Fatalf("unexpected stat result: %+v", result)
+	}
+}
+
 func TestGrepSearch(t *testing.T) {
 	workDir := t.TempDir()
 	client := NewClient(workDir)

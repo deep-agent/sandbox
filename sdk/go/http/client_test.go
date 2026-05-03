@@ -381,6 +381,133 @@ func TestFileExists(t *testing.T) {
 	}
 }
 
+func TestFileWriteAtomicAndMode(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/file/write" {
+			t.Errorf("expected path /v1/file/write, got %s", r.URL.Path)
+		}
+		var req model.FileWriteRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
+		if !req.Atomic || req.Mode != 0600 {
+			t.Errorf("expected atomic=true mode=0600, got atomic=%v mode=%o", req.Atomic, req.Mode)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"code": 0})
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test-session")
+	if err := client.FileWrite(&model.FileWriteRequest{File: "/tmp/test.txt", Content: "new content", Atomic: true, Mode: 0600}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestFileCreateTemp(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/file/create-temp" {
+			t.Errorf("expected path /v1/file/create-temp, got %s", r.URL.Path)
+		}
+		var req model.FileCreateTempRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
+		if req.Pattern != "shell-*.sh" || req.Mode != 0700 {
+			t.Errorf("unexpected request: %+v", req)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"code": 0, "data": map[string]interface{}{"file": "/tmp/shell-123.sh"}})
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test-session")
+	result, err := client.FileCreateTemp(&model.FileCreateTempRequest{Dir: "/tmp", Pattern: "shell-*.sh", Content: "echo hi", Mode: 0700})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.File != "/tmp/shell-123.sh" {
+		t.Fatalf("unexpected temp file result: %+v", result)
+	}
+}
+
+func TestFileGlob(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/file/glob" {
+			t.Errorf("expected path /v1/file/glob, got %s", r.URL.Path)
+		}
+		var req model.FileGlobRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
+		if req.Pattern != "*.go" {
+			t.Errorf("expected pattern *.go, got %s", req.Pattern)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"code": 0, "data": map[string]interface{}{"files": []string{"/tmp/a.go"}, "count": 1, "truncated": false, "output": "/tmp/a.go"}})
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test-session")
+	result, err := client.FileGlob(&model.FileGlobRequest{Path: "/tmp", Pattern: "*.go"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Count != 1 || len(result.Files) != 1 {
+		t.Fatalf("unexpected glob result: %+v", result)
+	}
+}
+
+func TestFileEvalSymlinks(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/file/eval-symlinks" {
+			t.Errorf("expected path /v1/file/eval-symlinks, got %s", r.URL.Path)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"code": 0, "data": map[string]interface{}{"resolved_path": "/tmp/real.txt"}})
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test-session")
+	result, err := client.FileEvalSymlinks(&model.FileEvalSymlinksRequest{Path: "/tmp/link.txt"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.ResolvedPath != "/tmp/real.txt" {
+		t.Fatalf("unexpected symlink result: %+v", result)
+	}
+}
+
+func TestFileAppend(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/file/append" {
+			t.Errorf("expected path /v1/file/append, got %s", r.URL.Path)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"code": 0})
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test-session")
+	if err := client.FileAppend(&model.FileAppendRequest{File: "/tmp/test.txt", Content: "abc"}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestFileStat(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/file/stat" {
+			t.Errorf("expected path /v1/file/stat, got %s", r.URL.Path)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"code": 0, "data": map[string]interface{}{"exists": true, "is_dir": false, "size": 3}})
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test-session")
+	result, err := client.FileStat(&model.FileStatRequest{Path: "/tmp/test.txt"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !result.Exists || result.Size != 3 {
+		t.Fatalf("unexpected stat result: %+v", result)
+	}
+}
+
 func TestGrepSearch(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v1/grep/search" {

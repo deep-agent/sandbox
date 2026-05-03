@@ -175,3 +175,16 @@ func (m *Manager) Stat(path string) (*model.FileStatResult, error) {
 		ModTimeUnix: info.ModTime().Unix(),
 	}, nil
 }
+
+func (m *Manager) EvalSymlinks(path string) (string, error) {
+	absPath, err := m.validatePath(path)
+	if err != nil {
+		return "", err
+	}
+
+	resolved, err := filepath.EvalSymlinks(absPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to eval symlinks: %w", err)
+	}
+	return resolved, nil
+}

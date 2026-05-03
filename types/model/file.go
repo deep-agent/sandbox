@@ -11,8 +11,10 @@ type FileReadResult struct {
 
 type FileWriteRequest struct {
 	File    string `json:"file" vd:"len($)>0"`
-	Content string `json:"content" vd:"len($)>0"`
+	Content string `json:"content"`
 	Base64  bool   `json:"base64,omitempty"`
+	Mode    uint32 `json:"mode,omitempty"`
+	Atomic  bool   `json:"atomic,omitempty"`
 }
 
 type FileListRequest struct {
@@ -61,6 +63,39 @@ type FileUploadResult struct {
 
 type FileDownloadRequest struct {
 	File string `json:"file" query:"file" vd:"len($)>0"`
+}
+
+type FileCreateTempRequest struct {
+	Dir     string `json:"dir,omitempty"`
+	Pattern string `json:"pattern,omitempty"`
+	Content string `json:"content,omitempty"`
+	Base64  bool   `json:"base64,omitempty"`
+	Mode    uint32 `json:"mode,omitempty"`
+}
+
+type FileCreateTempResult struct {
+	File string `json:"file"`
+}
+
+type FileGlobRequest struct {
+	Path    string `json:"path,omitempty"`
+	Pattern string `json:"pattern" vd:"len($)>0"`
+	Limit   int    `json:"limit,omitempty"`
+}
+
+type FileGlobResult struct {
+	Files     []string `json:"files"`
+	Count     int      `json:"count"`
+	Truncated bool     `json:"truncated"`
+	Output    string   `json:"output,omitempty"`
+}
+
+type FileEvalSymlinksRequest struct {
+	Path string `json:"path" vd:"len($)>0"`
+}
+
+type FileEvalSymlinksResult struct {
+	ResolvedPath string `json:"resolved_path"`
 }
 
 type FileAppendRequest struct {

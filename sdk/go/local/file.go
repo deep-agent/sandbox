@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/deep-agent/sandbox/internal/services/filesystem"
 	"github.com/deep-agent/sandbox/types/model"
 )
 
@@ -33,10 +34,11 @@ func (c *Client) FileRead(req *model.FileReadRequest) (*model.FileReadResult, er
 }
 
 func (c *Client) FileWrite(req *model.FileWriteRequest) error {
+	writeOpts := filesystem.WriteOptions{Mode: os.FileMode(req.Mode), Atomic: req.Atomic}
 	if req.Base64 {
-		return c.fileManager.WriteFileBase64(req.File, req.Content)
+		return c.fileManager.WriteFileBase64(req.File, req.Content, writeOpts)
 	}
-	return c.fileManager.WriteFile(req.File, req.Content)
+	return c.fileManager.WriteFile(req.File, req.Content, writeOpts)
 }
 
 func (c *Client) FileList(req *model.FileListRequest) (*model.FileListResult, error) {
@@ -114,6 +116,38 @@ func (c *Client) FileDownload(filePath string) (io.ReadCloser, string, error) {
 
 	contentType := localDetectContentType(filePath, content)
 	return io.NopCloser(bytes.NewReader(content)), contentType, nil
+}
+
+func (c *Client) FileCreateTemp(req *model.FileCreateTempRequest) (*model.FileCreateTempResult, error) {
+	var (
+		file string
+		err  error
+	)
+	if req.Base64 {
+		file, err = c.fileManager.CreateTempFileBase64(req.Dir, req.Pattern, req.Content, os.FileMode(req.Mode))
+	} else {
+		file, err = c.fileManager.CreateTempFile(req.Dir, req.Pattern, []byte(req.Content), os.FileMode(req.Mode))
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &model.FileCreateTempResult{File: file}, nil
+}
+
+func (c *Client) FileGlob(req *model.FileGlobRequest) (*model.FileGlobResult, error) {
+	result, err := c.fileManager.Glob(filesystem.GlobOptions{Path: req.Path, Pattern: req.Pattern, Limit: req.Limit})
+	if err != nil {
+		return nil, err
+	}
+	return &model.FileGlobResult{Files: result.Files, Count: result.Count, Truncated: result.Truncated, Output: result.Output}, nil
+}
+
+func (c *Client) FileEvalSymlinks(req *model.FileEvalSymlinksRequest) (*model.FileEvalSymlinksResult, error) {
+	resolved, err := c.fileManager.EvalSymlinks(req.Path)
+	if err != nil {
+		return nil, err
+	}
+	return &model.FileEvalSymlinksResult{ResolvedPath: resolved}, nil
 }
 
 func (c *Client) FileAppend(req *model.FileAppendRequest) error {

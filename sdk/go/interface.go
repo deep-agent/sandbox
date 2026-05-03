@@ -34,6 +34,9 @@ type FileManager interface {
 	FileExists(path string) (*model.FileExistsResult, error)
 	FileUpload(filename string, reader io.Reader, destPath string) (*model.FileUploadResult, error)
 	FileDownload(filePath string) (io.ReadCloser, string, error) // returns body, contentType, error
+	FileCreateTemp(req *model.FileCreateTempRequest) (*model.FileCreateTempResult, error)
+	FileGlob(req *model.FileGlobRequest) (*model.FileGlobResult, error)
+	FileEvalSymlinks(req *model.FileEvalSymlinksRequest) (*model.FileEvalSymlinksResult, error)
 	FileAppend(req *model.FileAppendRequest) error
 	FileStat(req *model.FileStatRequest) (*model.FileStatResult, error)
 }

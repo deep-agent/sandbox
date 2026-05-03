@@ -76,10 +76,11 @@ func (h *FileHandler) WriteFile(ctx context.Context, c *app.RequestContext) {
 	}
 
 	var err error
+	writeOpts := filesystem.WriteOptions{Mode: os.FileMode(req.Mode), Atomic: req.Atomic}
 	if req.Base64 {
-		err = h.manager.WriteFileBase64(req.File, req.Content)
+		err = h.manager.WriteFileBase64(req.File, req.Content, writeOpts)
 	} else {
-		err = h.manager.WriteFile(req.File, req.Content)
+		err = h.manager.WriteFile(req.File, req.Content, writeOpts)
 	}
 
 	if err != nil {
@@ -360,6 +361,101 @@ func (h *FileHandler) Download(ctx context.Context, c *app.RequestContext) {
 	c.Response.Header.Set("Content-Length", fmt.Sprintf("%d", len(content)))
 	c.SetStatusCode(http.StatusOK)
 	c.Response.SetBody(content)
+}
+
+func (h *FileHandler) CreateTemp(ctx context.Context, c *app.RequestContext) {
+	var req model.FileCreateTempRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.Response{Code: consts.CodeBadRequest, Message: "invalid request: " + err.Error()})
+		return
+	}
+
+	var (
+		file string
+		err  error
+	)
+	if req.Base64 {
+		file, err = h.manager.CreateTempFileBase64(req.Dir, req.Pattern, req.Content, os.FileMode(req.Mode))
+	} else {
+		file, err = h.manager.CreateTempFile(req.Dir, req.Pattern, []byte(req.Content), os.FileMode(req.Mode))
+	}
+	if err != nil {
+		if errors.Is(err, filesystem.ErrInvalidBase64) {
+			c.JSON(http.StatusBadRequest, model.Response{Code: consts.CodeBadRequest, Message: err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, model.Response{Code: consts.CodeInternal, Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Response{Code: consts.CodeSuccess, Data: model.FileCreateTempResult{File: file}})
+}
+
+func (h *FileHandler) Glob(ctx context.Context, c *app.RequestContext) {
+	var req model.FileGlobRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.Response{Code: consts.CodeBadRequest, Message: "invalid request: " + err.Error()})
+		return
+	}
+
+	result, err := h.manager.GlobWithContext(ctx, filesystem.GlobOptions{Path: req.Path, Pattern: req.Pattern, Limit: req.Limit})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.Response{Code: consts.CodeInternal, Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Response{Code: consts.CodeSuccess, Data: model.FileGlobResult{Files: result.Files, Count: result.Count, Truncated: result.Truncated, Output: result.Output}})
+}
+
+func (h *FileHandler) EvalSymlinks(ctx context.Context, c *app.RequestContext) {
+	var req model.FileEvalSymlinksRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.Response{Code: consts.CodeBadRequest, Message: "invalid request: " + err.Error()})
+		return
+	}
+
+	resolved, err := h.manager.EvalSymlinks(req.Path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			c.JSON(http.StatusNotFound, model.Response{Code: consts.CodeNotFound, Message: err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, model.Response{Code: consts.CodeInternal, Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Response{Code: consts.CodeSuccess, Data: model.FileEvalSymlinksResult{ResolvedPath: resolved}})
+}
+
+func (h *FileHandler) Append(ctx context.Context, c *app.RequestContext) {
+	var req model.FileAppendRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.Response{Code: consts.CodeBadRequest, Message: "invalid request: " + err.Error()})
+		return
+	}
+
+	if err := h.manager.AppendFile(req.File, req.Content); err != nil {
+		c.JSON(http.StatusInternalServerError, model.Response{Code: consts.CodeInternal, Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Response{Code: consts.CodeSuccess, Message: "success"})
+}
+
+func (h *FileHandler) Stat(ctx context.Context, c *app.RequestContext) {
+	var req model.FileStatRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.Response{Code: consts.CodeBadRequest, Message: "invalid request: " + err.Error()})
+		return
+	}
+
+	result, err := h.manager.Stat(req.Path)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.Response{Code: consts.CodeInternal, Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Response{Code: consts.CodeSuccess, Data: result})
 }
 
 func detectContentType(filePath string, content []byte) string {
