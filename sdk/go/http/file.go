@@ -108,9 +108,6 @@ func (c *Client) FileUpload(filename string, reader io.Reader, destPath string) 
 	if c.cwd != "" {
 		req.Header.Set(consts.HeaderWorkspace, c.cwd)
 	}
-	if c.sessionID != "" {
-		req.Header.Set(consts.HeaderSessionID, c.sessionID)
-	}
 	if c.tokenProvider != nil {
 		token, err := c.tokenProvider()
 		if err != nil {
@@ -152,9 +149,6 @@ func (c *Client) FileDownload(filePath string) (io.ReadCloser, string, error) {
 
 	if c.cwd != "" {
 		req.Header.Set(consts.HeaderWorkspace, c.cwd)
-	}
-	if c.sessionID != "" {
-		req.Header.Set(consts.HeaderSessionID, c.sessionID)
 	}
 	if c.tokenProvider != nil {
 		token, err := c.tokenProvider()

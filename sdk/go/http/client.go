@@ -23,7 +23,6 @@ type Client struct {
 	baseURL       string
 	httpClient    *http.Client
 	tokenProvider tokenProvider
-	sessionID     string
 	cwd           string
 }
 
@@ -71,10 +70,9 @@ func WithCwd(cwd string) Option {
 	}
 }
 
-func NewClient(baseURL, sessionID string, opts ...Option) *Client {
+func NewClient(baseURL string, _ string, opts ...Option) *Client {
 	c := &Client{
-		baseURL:   baseURL,
-		sessionID: sessionID,
+		baseURL: baseURL,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -111,10 +109,6 @@ func (c *Client) doRequest(method, path string, body interface{}) (*response, er
 	req.Header.Set("Content-Type", "application/json")
 	if c.cwd != "" {
 		req.Header.Set(consts.HeaderWorkspace, c.cwd)
-	}
-
-	if c.sessionID != "" {
-		req.Header.Set(consts.HeaderSessionID, c.sessionID)
 	}
 
 	if c.tokenProvider != nil {

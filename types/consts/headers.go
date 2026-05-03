@@ -1,4 +1,4 @@
 package consts
 
-const HeaderSessionID = "X-Session-ID"
 const HeaderWorkspace = "X-Workspace"
+const HeaderLogID = "X-Log-ID"

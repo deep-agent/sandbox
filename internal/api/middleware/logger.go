@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/deep-agent/sandbox/pkg/ctxutil"
 	"github.com/deep-agent/sandbox/pkg/logger"
-	"github.com/deep-agent/sandbox/types/consts"
 )
 
 func Logger() app.HandlerFunc {
@@ -16,10 +16,10 @@ func Logger() app.HandlerFunc {
 		method := string(c.Request.Method())
 		query := string(c.Request.URI().QueryString())
 		body := c.Request.Body()
-		sessionID := string(c.Request.Header.Peek(consts.HeaderSessionID))
+		logID := ctxutil.GetLogIDFromCtx(ctx)
 
-		format := "[HTTP] sid=%s method=%s path=%s"
-		args := []any{sessionID, method, path}
+		format := "[HTTP] log_id=%s method=%s path=%s"
+		args := []any{logID, method, path}
 		if query != "" {
 			format += " query=%q"
 			args = append(args, query)

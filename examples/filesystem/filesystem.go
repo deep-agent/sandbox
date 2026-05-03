@@ -130,7 +130,6 @@ func getMCPTools(ctx context.Context) []tool.BaseTool {
 
 	cli, err := client.NewStreamableHttpClient(mcpURL,
 		transport.WithHTTPHeaders(map[string]string{
-			"X-Session-ID": "123",
 			"X-Workspace":  "/tmp",
 		}))
 	if err != nil {

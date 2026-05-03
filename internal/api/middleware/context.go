@@ -10,12 +10,14 @@ import (
 
 func Context() app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
-		sessionID := string(c.Request.Header.Peek(consts.HeaderSessionID))
+		logID := string(c.Request.Header.Peek(consts.HeaderLogID))
 		cwd := string(c.Request.Header.Peek(consts.HeaderWorkspace))
 
-		if sessionID != "" {
-			ctx = ctxutil.WithSessionID(ctx, sessionID)
+		if logID == "" {
+			logID = ctxutil.NewLogID()
 		}
+		ctx = ctxutil.WithLogID(ctx, logID)
+
 		if cwd != "" {
 			ctx = ctxutil.WithCwd(ctx, cwd)
 		}

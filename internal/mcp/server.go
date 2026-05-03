@@ -61,12 +61,13 @@ func (s *Server) wrapHandler(handler server.ToolHandlerFunc) server.ToolHandlerF
 
 func contextMiddleware(next server.ToolHandlerFunc) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		sessionID := request.Header.Get(consts.HeaderSessionID)
+		logID := request.Header.Get(consts.HeaderLogID)
 		cwd := request.Header.Get(consts.HeaderWorkspace)
-		logger.Printf("[contextMiddleware] sessionID=%s, cwd=%s", sessionID, cwd)
-		if sessionID != "" {
-			ctx = ctxutil.WithSessionID(ctx, sessionID)
+		if logID == "" {
+			logID = ctxutil.NewLogID()
 		}
+		ctx = ctxutil.WithLogID(ctx, logID)
+		logger.Printf("[contextMiddleware] log_id=%s cwd=%s", logID, cwd)
 		if cwd != "" {
 			ctx = ctxutil.WithCwd(ctx, cwd)
 		}
@@ -79,9 +80,9 @@ func loggingMiddleware(next server.ToolHandlerFunc) server.ToolHandlerFunc {
 		start := time.Now()
 
 		toolName := request.Params.Name
-		sessionID := ctxutil.GetSessionIDFromCtx(ctx)
+		logID := ctxutil.GetLogIDFromCtx(ctx)
 		argsJSON, _ := json.Marshal(request.Params.Arguments)
-		logger.Printf("[%s][SessionID:%s] Request: %s", toolName, sessionID, string(argsJSON))
+		logger.Printf("[%s][log_id=%s] Request: %s", toolName, logID, string(argsJSON))
 
 		result, err := next(ctx, request)
 
@@ -89,11 +90,11 @@ func loggingMiddleware(next server.ToolHandlerFunc) server.ToolHandlerFunc {
 		responseText := getResultText(result)
 
 		if err != nil {
-			logger.Printf("[%s][SessionID:%s] Error after %v: %v \n=============", toolName, sessionID, duration, err)
+			logger.Printf("[%s][log_id=%s] Error after %v: %v \n=============", toolName, logID, duration, err)
 		} else if result != nil && result.IsError {
-			logger.Printf("[%s][SessionID:%s] Failed after %v\nResponse: %s \n=============", toolName, sessionID, duration, responseText)
+			logger.Printf("[%s][log_id=%s] Failed after %v\nResponse: %s \n=============", toolName, logID, duration, responseText)
 		} else {
-			logger.Printf("[%s][SessionID:%s] Success after %v\nResponse: %s \n=============", toolName, sessionID, duration, responseText)
+			logger.Printf("[%s][log_id=%s] Success after %v\nResponse: %s \n=============", toolName, logID, duration, responseText)
 		}
 
 		return result, err
